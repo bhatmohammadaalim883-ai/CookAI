@@ -1,6 +1,7 @@
 
 import os
 import json
+import time
 from io import BytesIO
 
 from flask import Flask, render_template, request, jsonify
@@ -22,12 +23,35 @@ client = genai.Client(api_key=API_KEY) if API_KEY else None
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 
 
+class GeminiTemporaryError(Exception):
+    """Raised when Gemini remains temporarily unavailable."""
+
+
 def load_recipes():
     try:
         with open("recipes.json", "r", encoding="utf-8") as file:
             return json.load(file)
     except (FileNotFoundError, json.JSONDecodeError):
         return []
+
+
+def get_error_status(error):
+    """Extract an HTTP status code from a Gemini API error."""
+    status = getattr(error, "code", None)
+
+    if not isinstance(status, int):
+        status = getattr(error, "status_code", None)
+
+    if isinstance(status, int):
+        return status
+
+    error_text = str(error)
+
+    for code in (429, 500, 502, 503, 504):
+        if str(code) in error_text:
+            return code
+
+    return None
 
 
 def detect_ingredients(image_file):
@@ -68,31 +92,71 @@ def detect_ingredients(image_file):
     Use simple English ingredient names.
     """
 
-    response = client.models.generate_content(
-        model=MODEL_NAME,
-        contents=[
-            prompt,
-            types.Part.from_bytes(
-                data=processed_image,
-                mime_type="image/jpeg"
+    for attempt in range(3):
+        try:
+            response = client.models.generate_content(
+                model=MODEL_NAME,
+                contents=[
+                    prompt,
+                    types.Part.from_bytes(
+                        data=processed_image,
+                        mime_type="image/jpeg"
+                    )
+                ],
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json"
+                )
             )
-        ],
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json"
-        )
+
+            if not response.text:
+                raise ValueError("The AI returned an empty response.")
+
+            result = json.loads(response.text)
+            ingredients = result.get("ingredients", [])
+
+            if not isinstance(ingredients, list):
+                raise ValueError("Invalid AI response.")
+
+            return sorted({
+                item.strip().lower()
+                for item in ingredients
+                if isinstance(item, str) and item.strip()
+            })
+
+        except ValueError:
+            raise
+
+        except Exception as error:
+            status = get_error_status(error)
+
+            temporary_errors = {429, 500, 502, 503, 504}
+
+            if status not in temporary_errors:
+                raise
+
+            if attempt == 2:
+                app.logger.error(
+                    "Gemini remained unavailable after 3 attempts: %s",
+                    error
+                )
+                raise GeminiTemporaryError(
+                    "Gemini AI is temporarily busy. Please try again in a few minutes."
+                ) from error
+
+            wait_time = 2 ** (attempt + 1)
+
+            app.logger.warning(
+                "Gemini temporary error %s. Retrying in %s seconds. Attempt %s/3.",
+                status,
+                wait_time,
+                attempt + 1
+            )
+
+            time.sleep(wait_time)
+
+    raise GeminiTemporaryError(
+        "Gemini AI is temporarily unavailable. Please try again later."
     )
-
-    result = json.loads(response.text)
-    ingredients = result.get("ingredients", [])
-
-    if not isinstance(ingredients, list):
-        raise ValueError("Invalid AI response.")
-
-    return sorted({
-        item.strip().lower()
-        for item in ingredients
-        if isinstance(item, str) and item.strip()
-    })
 
 
 def recommend_recipes(ingredients):
@@ -183,6 +247,12 @@ def scan():
             "message": "Ingredients identified successfully!"
         })
 
+    except GeminiTemporaryError as error:
+        return jsonify({
+            "success": False,
+            "error": str(error)
+        }), 503
+
     except ValueError as error:
         return jsonify({
             "success": False,
@@ -191,13 +261,12 @@ def scan():
 
     except Exception:
         app.logger.exception("CookAI scanning failed")
+
         return jsonify({
             "success": False,
             "error": "AI scanning failed. Please check the API configuration and try again."
         }), 500
 
-
-@app.errorhandler(413)
 
 @app.route("/api/recipes", methods=["POST"])
 def get_recipes():
@@ -229,6 +298,8 @@ def get_recipes():
         "recipes": recipes
     })
 
+
+@app.errorhandler(413)
 def file_too_large(error):
     return jsonify({
         "success": False,
