@@ -1,0 +1,51 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 120" role="img" aria-labelledby="title">
+  <title id="title">CookAI - Scan, Cook, Enjoy</title>
+
+  <defs>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#83d82d"/>
+      <stop offset="100%" stop-color="#168447"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Chef hat -->
+  <g fill="#ffffff" stroke="#176b3a" stroke-width="4"
+     stroke-linejoin="round">
+    <path d="M25 61 C8 57 10 35 28 31
+      C27 12 53 5 65 22
+      C79 5 104 15 101 36
+      C119 45 108 65 94 66
+      L94 83 L32 83 Z"/>
+  </g>
+
+  <!-- Green leaf -->
+  <path d="M48 70 C49 42 75 32 92 30
+    C89 52 74 70 48 70Z" fill="url(#green)"/>
+
+  <path d="M49 69 Q68 48 87 36"
+    fill="none" stroke="#ffffff" stroke-width="2.5"/>
+
+  <!-- AI circuit -->
+  <g stroke="#62bd38" stroke-width="3"
+     fill="none" stroke-linecap="round">
+    <path d="M105 37 H124 V25 H139"/>
+    <path d="M105 51 H132 V62 H143"/>
+    <circle cx="142" cy="25" r="4" fill="#62bd38"/>
+    <circle cx="146" cy="62" r="4" fill="#62bd38"/>
+  </g>
+
+  <!-- Brand name -->
+  <text x="155" y="67"
+    font-family="Arial, sans-serif"
+    font-size="51"
+    font-weight="800"
+    fill="#176b3a">Cook<tspan fill="#70bd32">AI</tspan></text>
+
+  <!-- Tagline -->
+  <text x="158" y="94"
+    font-family="Arial, sans-serif"
+    font-size="15"
+    letter-spacing="2"
+    fill="#52715a">SCAN • COOK • ENJOY</text>
+</svg>
