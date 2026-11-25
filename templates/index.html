@@ -4,133 +4,365 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#f8f7f2">
-    <title>CookAI | Discover What You Can Cook</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <meta name="theme-color" content="#f7fbf5">
+    <meta name="description" content="CookAI uses AI to identify your ingredients and discover delicious recipes.">
+
+    <title>CookAI - Scan, Discover, Cook</title>
+
+    <link rel="icon" type="image/svg+xml"
+          href="{{ url_for('static', filename='cookai-logo.svg') }}">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap"
+          rel="stylesheet">
 </head>
+
 <body>
 
-<header class="navbar">
-    <a href="/" class="logo">🍳 Cook<span>AI</span></a>
-    <nav>
-        <a href="#how-it-works">How It Works</a>
-        <a href="#scanner">Find Recipes</a>
-    </nav>
-</header>
+    <!-- NAVIGATION -->
+    <header class="navbar">
+        <div class="nav-container">
 
-<main>
-    <section class="hero">
-        <div class="hero-content">
-            <span class="eyebrow">✦ YOUR AI KITCHEN ASSISTANT</span>
-            <h1>Turn your ingredients into <span>delicious ideas.</span></h1>
-            <p>
-                Upload pictures of the ingredients in your kitchen.
-                Let AI recognise them and discover dishes you can prepare.
-            </p>
-            <a href="#scanner" class="primary-btn">Discover Recipes →</a>
+            <a href="/" class="brand-link" aria-label="CookAI home">
+                <img
+                    src="{{ url_for('static', filename='cookai-logo.svg') }}"
+                    alt="CookAI - Scan, Cook, Enjoy"
+                    class="logo"
+                >
+            </a>
+
+            <nav class="nav-links">
+                <a href="#home">Home</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="#scanner" class="nav-cta">Try CookAI</a>
+            </nav>
+
         </div>
-        <div class="hero-art">
-            <div class="food-circle">🥕 🥔 🍅 🧅 🥬</div>
-            <span class="floating-note">✨ Powered by AI</span>
-        </div>
-    </section>
+    </header>
 
-    <section class="steps" id="how-it-works">
-        <div class="section-heading">
-            <span class="eyebrow">SIMPLE AS 1, 2, 3</span>
-            <h2>How CookAI works</h2>
-        </div>
 
-        <div class="steps-grid">
-            <article class="step-card">
-                <div class="step-icon">📸</div>
-                <h3>01. Upload</h3>
-                <p>Choose pictures of your available ingredients.</p>
-            </article>
-            <article class="step-card">
-                <div class="step-icon">🤖</div>
-                <h3>02. Recognise</h3>
-                <p>AI analyses your pictures and identifies ingredients.</p>
-            </article>
-            <article class="step-card">
-                <div class="step-icon">🍲</div>
-                <h3>03. Discover</h3>
-                <p>Find recipes that match your available ingredients.</p>
-            </article>
-        </div>
-    </section>
+    <main>
 
-    <section class="scanner-section" id="scanner">
-        <div class="section-heading">
-            <span class="eyebrow">LET'S GET COOKING</span>
-            <h2>What's in your kitchen?</h2>
-            <p>Upload up to five ingredient photographs.</p>
-        </div>
+        <!-- HERO SECTION -->
+        <section class="hero" id="home">
 
-        <div class="upload-box" id="uploadBox">
-            <div class="upload-icon">📷</div>
-            <h3>Upload your ingredients</h3>
-            <p>Drag and drop images here or browse your device.</p>
+            <div class="hero-content">
 
-            <label for="imageInput" class="upload-btn">
-                Choose Images
-            </label>
+                <div class="eyebrow">
+                    <span class="eyebrow-dot"></span>
+                    YOUR AI-POWERED KITCHEN ASSISTANT
+                </div>
 
-            <input
-                type="file"
-                id="imageInput"
-                accept="image/jpeg,image/png,image/webp"
-                multiple
-                hidden
-            >
+                <h1>
+                    Turn Your Ingredients
+                    Into <span>Delicious Ideas.</span>
+                </h1>
 
-            <p class="file-info">JPG, PNG or WEBP · Maximum 5 images · 15 MB total</p>
-        </div>
+                <p>
+                    Take a photo of the ingredients in your kitchen.
+                    CookAI identifies them with AI and helps you discover
+                    recipes you can make.
+                </p>
 
-        <div id="previewContainer" class="preview-grid"></div>
+                <div class="hero-actions">
+                    <a href="#scanner" class="primary-button">
+                        Start Cooking
+                        <span aria-hidden="true">→</span>
+                    </a>
 
-        <button id="scanButton" class="primary-btn scan-btn" disabled>
-            ✨ Identify Ingredients
-        </button>
+                    <a href="#how-it-works" class="secondary-button">
+                        How it works
+                    </a>
+                </div>
 
-        <div id="loading" class="loading hidden">
-            <div class="spinner"></div>
-            <p>Our AI chef is examining your ingredients...</p>
-            <small>This may take a little time.</small>
-        </div>
+                <div class="hero-note">
+                    <span>✦</span>
+                    Scan ingredients. Discover recipes. Enjoy cooking.
+                </div>
 
-        <div id="errorMessage" class="error-message hidden"></div>
-
-        <section id="results" class="results hidden">
-            <div class="section-heading">
-                <span class="eyebrow">AI ANALYSIS</span>
-                <h2>Your detected ingredients</h2>
-                <p>Check the AI results. You can correct them before finding recipes.</p>
             </div>
 
-            <div id="ingredientList" class="ingredient-list"></div>
+            <div class="hero-visual">
+                <div class="hero-image-card">
+                    <div class="hero-card-top">
+                        <span class="status-dot"></span>
+                        COOKAI KITCHEN
+                    </div>
 
-            <div class="add-ingredient">
-                <input id="manualIngredient" type="text"
-                       placeholder="Add or correct an ingredient...">
-                <button id="addIngredientButton">Add</button>
+                    <div class="food-illustration" aria-hidden="true">
+                        <span class="food food-tomato">🍅</span>
+                        <span class="food food-carrot">🥕</span>
+                        <span class="food food-leaf">🥬</span>
+                        <span class="food food-potato">🥔</span>
+                        <span class="food food-pepper">🫑</span>
+                    </div>
+
+                    <div class="hero-card-bottom">
+                        <div>
+                            <strong>Fresh ingredients</strong>
+                            <span>New recipe possibilities</span>
+                        </div>
+                        <span class="sparkle">✦</span>
+                    </div>
+                </div>
+
+                <div class="floating-note">
+                    <span class="floating-icon">✦</span>
+                    <div>
+                        <strong>AI-powered</strong>
+                        <small>Ingredient recognition</small>
+                    </div>
+                </div>
             </div>
 
-            <button id="findRecipesButton" class="primary-btn">
-                Find My Recipes →
-            </button>
-
-            <div id="recipeContainer" class="recipe-grid"></div>
         </section>
-    </section>
-</main>
 
-<footer>
-    <a href="/" class="logo">🍳 Cook<span>AI</span></a>
-    <p>Smart cooking starts with what you already have.</p>
-    <small>Class 11 Informatics Practices Project</small>
-</footer>
 
-<script src="{{ url_for('static', filename='script.js') }}"></script>
+        <!-- HOW IT WORKS -->
+        <section class="how-section" id="how-it-works">
+
+            <div class="section-heading">
+                <span class="section-label">SIMPLE AS 1, 2, 3</span>
+                <h2>How CookAI Works</h2>
+                <p>From kitchen ingredients to your next favourite meal.</p>
+            </div>
+
+            <div class="steps-grid">
+
+                <article class="step-card">
+                    <div class="step-number">01</div>
+                    <div class="step-icon">📸</div>
+                    <h3>Upload a Photo</h3>
+                    <p>
+                        Take a picture of your available ingredients
+                        and upload it to CookAI.
+                    </p>
+                </article>
+
+                <article class="step-card">
+                    <div class="step-number">02</div>
+                    <div class="step-icon">🤖</div>
+                    <h3>AI Identifies</h3>
+                    <p>
+                        Our AI analyses your photograph and
+                        identifies the ingredients.
+                    </p>
+                </article>
+
+                <article class="step-card">
+                    <div class="step-number">03</div>
+                    <div class="step-icon">🍲</div>
+                    <h3>Discover Recipes</h3>
+                    <p>
+                        Explore recipe suggestions and follow
+                        the cooking instructions.
+                    </p>
+                </article>
+
+            </div>
+        </section>
+
+
+        <!-- SCANNER -->
+        <section class="scanner-section" id="scanner">
+
+            <div class="section-heading">
+                <span class="section-label">LET'S GET COOKING</span>
+                <h2>What's in Your Kitchen?</h2>
+                <p>
+                    Upload photographs of your ingredients and let
+                    CookAI do the discovery.
+                </p>
+            </div>
+
+            <div class="scanner-panel">
+
+                <div class="scanner-heading">
+                    <div>
+                        <span class="scanner-label">STEP 1</span>
+                        <h3>Upload Your Ingredients</h3>
+                        <p>Select up to 5 ingredient photographs.</p>
+                    </div>
+
+                    <span class="scanner-icon">🥗</span>
+                </div>
+
+                <div class="upload-box" id="uploadBox">
+
+                    <input
+                        type="file"
+                        id="imageInput"
+                        accept="image/jpeg,image/png,image/webp"
+                        multiple
+                        hidden
+                    >
+
+                    <div class="upload-icon">☁️</div>
+
+                    <h3>Drop your images here</h3>
+
+                    <p>
+                        or
+                        <label for="imageInput" class="browse-link">
+                            browse files
+                        </label>
+                    </p>
+
+                    <span class="upload-hint">
+                        JPG, PNG or WEBP · Maximum 5 images
+                    </span>
+
+                </div>
+
+                <div
+                    class="preview-grid"
+                    id="previewContainer"
+                    aria-live="polite"
+                ></div>
+
+                <div class="scanner-actions">
+                    <button
+                        type="button"
+                        class="primary-button scan-button"
+                        id="scanButton"
+                    >
+                        <span>✦</span>
+                        Identify Ingredients with AI
+                    </button>
+                </div>
+
+                <div
+                    class="loading hidden"
+                    id="loading"
+                    role="status"
+                    aria-live="polite"
+                >
+                    <div class="spinner"></div>
+                    <p>CookAI is analysing your ingredients...</p>
+                    <small>This may take a few moments.</small>
+                </div>
+
+                <div
+                    class="error-message hidden"
+                    id="errorMessage"
+                    role="alert"
+                ></div>
+
+
+                <!-- RESULTS -->
+                <div class="results hidden" id="results">
+
+                    <div class="results-divider"></div>
+
+                    <div class="results-heading">
+                        <span class="section-label">STEP 2</span>
+                        <h3>Your Detected Ingredients</h3>
+                        <p>
+                            Check the ingredients below. You can add
+                            or remove items before finding recipes.
+                        </p>
+                    </div>
+
+                    <div
+                        class="ingredient-list"
+                        id="ingredientList"
+                        aria-live="polite"
+                    ></div>
+
+                    <div class="manual-ingredient-area">
+
+                        <label for="manualIngredient">
+                            Missing an ingredient?
+                        </label>
+
+                        <div class="manual-input-row">
+                            <input
+                                type="text"
+                                id="manualIngredient"
+                                placeholder="Enter an ingredient..."
+                                maxlength="60"
+                            >
+
+                            <button
+                                type="button"
+                                class="add-button"
+                                id="addIngredientButton"
+                            >
+                                + Add
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <div class="find-recipes-area">
+                        <button
+                            type="button"
+                            class="primary-button find-button"
+                            id="findRecipesButton"
+                        >
+                            Discover My Recipes
+                            <span aria-hidden="true">→</span>
+                        </button>
+                    </div>
+
+
+                    <!-- RECIPE RESULTS -->
+                    <div class="recipe-results">
+
+                        <div class="results-heading">
+                            <span class="section-label">STEP 3</span>
+                            <h3>Recipes For You</h3>
+                            <p>
+                                Here are some dishes you can make
+                                with your ingredients.
+                            </p>
+                        </div>
+
+                        <div
+                            class="recipe-grid"
+                            id="recipeContainer"
+                            aria-live="polite"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- FOOTER -->
+        <footer class="footer">
+
+            <a href="/" class="footer-brand">
+                <img
+                    src="{{ url_for('static', filename='cookai-logo.svg') }}"
+                    alt="CookAI logo"
+                >
+            </a>
+
+            <p>
+                Making everyday cooking smarter, simpler and more creative.
+            </p>
+
+            <div class="footer-bottom">
+                <span>© 2026 CookAI. All rights reserved.</span>
+                <span>Made with ✦ for food lovers.</span>
+            </div>
+
+        </footer>
+
+    </main>
+
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
 </body>
 </html>
