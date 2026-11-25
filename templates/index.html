@@ -9,28 +9,17 @@
 
     <title>CookAI - Scan, Cook, Enjoy</title>
 
-    <!-- COOKAI BROWSER FAVICON -->
-    <link
-        rel="icon"
-        type="image/png"
-        sizes="512x512"
-        href="{{ url_for('static', filename='cookai-favicon.png') }}"
-    >
+    <link rel="icon" type="image/png" sizes="512x512"
+          href="{{ url_for('static', filename='cookai-favicon.png') }}">
 
-    <!-- MAIN STYLESHEET -->
-    <link
-        rel="stylesheet"
-        href="{{ url_for('static', filename='style.css') }}"
-    >
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
 
-    <!-- GOOGLE FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <link
-        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap"
-        rel="stylesheet"
-    >
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap"
+          rel="stylesheet">
 </head>
 
 <body>
@@ -43,14 +32,42 @@
                 <img
                     src="{{ url_for('static', filename='cookai-logo.svg') }}"
                     alt="CookAI Logo"
-                    class="logo"
-                >
+                    class="logo">
             </a>
 
             <nav class="nav-links">
                 <a href="#home">Home</a>
                 <a href="#how-it-works">How It Works</a>
                 <a href="#scanner" class="nav-cta">Try CookAI</a>
+
+                {% if current_user.is_authenticated %}
+
+                    <span class="nav-user">
+                        Hello, {{ current_user.username }}
+                    </span>
+
+                    <form method="POST"
+                          action="{{ url_for('logout') }}"
+                          style="display:inline;">
+
+                        <button type="submit" class="nav-cta">
+                            Logout
+                        </button>
+
+                    </form>
+
+                {% else %}
+
+                    <a href="{{ url_for('login') }}" class="nav-cta">
+                        Login
+                    </a>
+
+                    <a href="{{ url_for('signup') }}" class="nav-cta">
+                        Sign Up
+                    </a>
+
+                {% endif %}
+
             </nav>
 
         </div>
@@ -133,7 +150,6 @@
 
         </section>
 
-
         <!-- HOW IT WORKS -->
         <section class="how-section" id="how-it-works">
 
@@ -178,7 +194,6 @@
             </div>
         </section>
 
-
         <!-- INGREDIENT SCANNER -->
         <section class="scanner-section" id="scanner">
 
@@ -210,8 +225,7 @@
                         id="imageInput"
                         accept="image/jpeg,image/png,image/webp"
                         multiple
-                        hidden
-                    >
+                        hidden>
 
                     <div class="upload-icon">☁️</div>
                     <h3>Drop your images here</h3>
@@ -229,39 +243,34 @@
 
                 </div>
 
-                <div
-                    class="preview-grid"
-                    id="previewContainer"
-                    aria-live="polite">
+                <div class="preview-grid"
+                     id="previewContainer"
+                     aria-live="polite">
                 </div>
 
                 <div class="scanner-actions">
-                    <button
-                        type="button"
-                        class="primary-button scan-button"
-                        id="scanButton">
+                    <button type="button"
+                            class="primary-button scan-button"
+                            id="scanButton">
                         <span>✦</span>
                         Identify Ingredients with AI
                     </button>
                 </div>
 
-                <div
-                    class="loading hidden"
-                    id="loading"
-                    role="status"
-                    aria-live="polite">
+                <div class="loading hidden"
+                     id="loading"
+                     role="status"
+                     aria-live="polite">
 
                     <div class="spinner"></div>
                     <p>CookAI is analysing your ingredients...</p>
                     <small>This may take a few moments.</small>
                 </div>
 
-                <div
-                    class="error-message hidden"
-                    id="errorMessage"
-                    role="alert">
+                <div class="error-message hidden"
+                     id="errorMessage"
+                     role="alert">
                 </div>
-
 
                 <!-- INGREDIENT RESULTS -->
                 <div class="results hidden" id="results">
@@ -277,10 +286,9 @@
                         </p>
                     </div>
 
-                    <div
-                        class="ingredient-list"
-                        id="ingredientList"
-                        aria-live="polite">
+                    <div class="ingredient-list"
+                         id="ingredientList"
+                         aria-live="polite">
                     </div>
 
                     <div class="manual-ingredient-area">
@@ -294,13 +302,11 @@
                                 type="text"
                                 id="manualIngredient"
                                 placeholder="Enter an ingredient..."
-                                maxlength="60"
-                            >
+                                maxlength="60">
 
-                            <button
-                                type="button"
-                                class="add-button"
-                                id="addIngredientButton">
+                            <button type="button"
+                                    class="add-button"
+                                    id="addIngredientButton">
                                 + Add
                             </button>
                         </div>
@@ -308,14 +314,12 @@
                     </div>
 
                     <div class="find-recipes-area">
-                        <button
-                            type="button"
-                            class="primary-button find-button"
-                            id="findRecipesButton">
+                        <button type="button"
+                                class="primary-button find-button"
+                                id="findRecipesButton">
                             Discover My Recipes <span>→</span>
                         </button>
                     </div>
-
 
                     <!-- RECIPE RESULTS -->
                     <div class="recipe-results">
@@ -329,10 +333,9 @@
                             </p>
                         </div>
 
-                        <div
-                            class="recipe-grid"
-                            id="recipeContainer"
-                            aria-live="polite">
+                        <div class="recipe-grid"
+                             id="recipeContainer"
+                             aria-live="polite">
                         </div>
 
                     </div>
@@ -344,15 +347,13 @@
 
     </main>
 
-
     <!-- FOOTER -->
     <footer class="footer">
 
         <a href="/" class="footer-brand">
             <img
                 src="{{ url_for('static', filename='cookai-logo.svg') }}"
-                alt="CookAI Logo"
-            >
+                alt="CookAI Logo">
         </a>
 
         <p>
@@ -366,7 +367,6 @@
 
     </footer>
 
-    <!-- MAIN JAVASCRIPT -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 
 </body>
