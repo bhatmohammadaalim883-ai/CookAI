@@ -4,10 +4,7 @@ import json
 import time
 from io import BytesIO
 
-from flask import (
-    Flask, render_template, request, jsonify,
-    redirect, url_for, flash
-)
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -15,8 +12,12 @@ from PIL import Image, UnidentifiedImageError
 
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
-    LoginManager, UserMixin, login_user,
-    logout_user, login_required, current_user
+    LoginManager,
+    UserMixin,
+    login_user,
+    logout_user,
+    login_required,
+    current_user
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -24,39 +25,35 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Security configuration
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+# -----------------------------
+# APP CONFIGURATION
+# -----------------------------
 
-if not app.config["SECRET_KEY"]:
-    raise RuntimeError("SECRET_KEY environment variable is missing.")
+SECRET_KEY = os.getenv("SECRET_KEY")
 
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY is missing from environment variables.")
+
+app.config["SECRET_KEY"] = SECRET_KEY
 app.config["MAX_CONTENT_LENGTH"] = 15 * 1024 * 1024
 
-# SQLite database configuration
-os.makedirs(app.instance_path, exist_ok=True)
-
-DATABASE_PATH = os.getenv(
-    "DATABASE_PATH",
-    os.path.join(app.instance_path, "cookai.db")
-)
-
-os.makedirs(os.path.dirname(os.path.abspath(DATABASE_PATH)), exist_ok=True)
-
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    "sqlite:///" + os.path.abspath(DATABASE_PATH)
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
+    "DATABASE_URL",
+    "sqlite:///cookai.db"
 )
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# Login configuration
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
-login_manager.login_message = "Please log in to access this page."
 
 
-# User database model
+# -----------------------------
+# USER DATABASE MODEL
+# -----------------------------
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
@@ -75,7 +72,15 @@ def load_user(user_id):
     return db.session.get(User, int(user_id))
 
 
-# Gemini configuration
+# Create database tables if they do not exist.
+with app.app_context():
+    db.create_all()
+
+
+# -----------------------------
+# GEMINI CONFIGURATION
+# -----------------------------
+
 API_KEY = os.getenv("GEMINI_API_KEY")
 MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
@@ -85,18 +90,181 @@ ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 
 
 class GeminiTemporaryError(Exception):
-    """Raised when Gemini remains temporarily unavailable."""
+    pass
 
+
+# -----------------------------
+# AUTHENTICATION
+# -----------------------------
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+
+    if current_user.is_authenticated:
+        return redirect(url_for("home"))
+
+    if request.method == "POST":
+
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+
+        if not username or not email or not password:
+            flash("Please complete all fields.", "error")
+            return redirect(url_for("signup"))
+
+        if len(username) < 3 or len(username) > 50:
+            flash("Username must be between 3 and 50 characters.", "error")
+            return redirect(url_for("signup"))
+
+        if len(password) < 8:
+            flash("Password must contain at least 8 characters.", "error")
+            return redirect(url_for("signup"))
+
+        if "@" not in email or "." not in email:
+            flash("Please enter a valid email address.", "error")
+            return redirect(url_for("signup"))
+
+        existing_user = User.query.filter(
+            (User.username == username) | (User.email == email)
+        ).first()
+
+        if existing_user:
+            flash("That username or email is already registered.", "error")
+            return redirect(url_for("signup"))
+
+        user = User(
+            username=username,
+            email=email
+        )
+        user.set_password(password)
+
+        db.session.add(user)
+        db.session.commit()
+
+        login_user(user)
+
+        flash("Your CookAI account has been created!", "success")
+        return redirect(url_for("home"))
+
+    return render_template("signup.html")
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+
+    if current_user.is_authenticated:
+        return redirect(url_for("home"))
+
+    if request.method == "POST":
+
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+
+        user = User.query.filter_by(email=email).first()
+
+        if user and user.check_password(password):
+            login_user(user)
+            flash("You are now logged in!", "success")
+            return redirect(url_for("home"))
+
+        flash("Incorrect email or password.", "error")
+        return redirect(url_for("login"))
+
+    return render_template("login.html")
+
+
+@app.route("/logout", methods=["POST"])
+@login_required
+def logout():
+
+    logout_user()
+    flash("You have been logged out.", "success")
+
+    return redirect(url_for("home"))
+
+
+# -----------------------------
+# API LOGIN PROTECTION
+# -----------------------------
+
+@login_manager.unauthorized_handler
+def unauthorized():
+
+    if request.path.startswith("/api/"):
+        return jsonify({
+            "success": False,
+            "error": "Please sign up or log in to use CookAI."
+        }), 401
+
+    return redirect(url_for("login"))
+
+
+# -----------------------------
+# HOME PAGE
+# -----------------------------
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+
+# -----------------------------
+# RECIPE DATABASE
+# -----------------------------
 
 def load_recipes():
+
     try:
         with open("recipes.json", "r", encoding="utf-8") as file:
             return json.load(file)
+
     except (FileNotFoundError, json.JSONDecodeError):
         return []
 
 
+def recommend_recipes(ingredients):
+
+    recipes = load_recipes()
+    available = set(ingredients)
+    recommendations = []
+
+    for recipe in recipes:
+
+        required = set(recipe.get("ingredients", []))
+
+        if not required:
+            continue
+
+        matched = sorted(required & available)
+        missing = sorted(required - available)
+
+        if not matched:
+            continue
+
+        percentage = round(len(matched) / len(required) * 100)
+
+        recommendations.append({
+            **recipe,
+            "matched_ingredients": matched,
+            "missing_ingredients": missing,
+            "match_percentage": percentage
+        })
+
+    recommendations.sort(
+        key=lambda recipe: recipe["match_percentage"],
+        reverse=True
+    )
+
+    return recommendations
+
+
+# -----------------------------
+# GEMINI ERROR HANDLING
+# -----------------------------
+
 def get_error_status(error):
+
     status = getattr(error, "code", None)
 
     if not isinstance(status, int):
@@ -114,7 +282,12 @@ def get_error_status(error):
     return None
 
 
+# -----------------------------
+# INGREDIENT RECOGNITION
+# -----------------------------
+
 def detect_ingredients(image_file):
+
     if client is None:
         raise RuntimeError("Gemini API key is not configured.")
 
@@ -124,15 +297,18 @@ def detect_ingredients(image_file):
         raise ValueError("The uploaded image is empty.")
 
     try:
+
         with Image.open(BytesIO(image_bytes)) as image:
             image.verify()
 
         with Image.open(BytesIO(image_bytes)) as image:
+
             image = image.convert("RGB")
             image.thumbnail((1200, 1200))
 
             output = BytesIO()
             image.save(output, format="JPEG", quality=85)
+
             processed_image = output.getvalue()
 
     except (UnidentifiedImageError, OSError):
@@ -153,7 +329,9 @@ def detect_ingredients(image_file):
     """
 
     for attempt in range(3):
+
         try:
+
             response = client.models.generate_content(
                 model=MODEL_NAME,
                 contents=[
@@ -187,6 +365,7 @@ def detect_ingredients(image_file):
             raise
 
         except Exception as error:
+
             status = get_error_status(error)
             temporary_errors = {429, 500, 502, 503, 504}
 
@@ -194,12 +373,14 @@ def detect_ingredients(image_file):
                 raise
 
             if attempt == 2:
+
                 app.logger.error(
                     "Gemini remained unavailable after 3 attempts: %s",
                     error
                 )
+
                 raise GeminiTemporaryError(
-                    "Gemini AI is temporarily busy. Please try again in a few minutes."
+                    "Gemini AI is temporarily busy. Please try again later."
                 ) from error
 
             wait_time = 2 ** (attempt + 1)
@@ -218,131 +399,14 @@ def detect_ingredients(image_file):
     )
 
 
-def recommend_recipes(ingredients):
-    recipes = load_recipes()
-    available = set(ingredients)
-    recommendations = []
-
-    for recipe in recipes:
-        required = set(recipe.get("ingredients", []))
-
-        if not required:
-            continue
-
-        matched = sorted(required & available)
-        missing = sorted(required - available)
-
-        if not matched:
-            continue
-
-        percentage = round(len(matched) / len(required) * 100)
-
-        recommendations.append({
-            **recipe,
-            "matched_ingredients": matched,
-            "missing_ingredients": missing,
-            "match_percentage": percentage
-        })
-
-    recommendations.sort(
-        key=lambda recipe: recipe["match_percentage"],
-        reverse=True
-    )
-
-    return recommendations
-
-
-# -------------------------
-# AUTHENTICATION ROUTES
-# -------------------------
-
-@app.route("/signup", methods=["GET", "POST"])
-def signup():
-    if current_user.is_authenticated:
-        return redirect(url_for("home"))
-
-    if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        email = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "")
-
-        if not username or not email or not password:
-            flash("Please fill in all fields.", "error")
-            return render_template("signup.html")
-
-        if len(username) > 50:
-            flash("Username must be 50 characters or fewer.", "error")
-            return render_template("signup.html")
-
-        if len(password) < 8:
-            flash("Password must contain at least 8 characters.", "error")
-            return render_template("signup.html")
-
-        existing_user = User.query.filter(
-            (User.username == username) | (User.email == email)
-        ).first()
-
-        if existing_user:
-            flash("Username or email already exists.", "error")
-            return render_template("signup.html")
-
-        new_user = User(
-            username=username,
-            email=email
-        )
-        new_user.set_password(password)
-
-        db.session.add(new_user)
-        db.session.commit()
-
-        login_user(new_user)
-
-        flash("Your CookAI account was created successfully!", "success")
-        return redirect(url_for("home"))
-
-    return render_template("signup.html")
-
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for("home"))
-
-    if request.method == "POST":
-        email = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "")
-
-        user = User.query.filter_by(email=email).first()
-
-        if user and user.check_password(password):
-            login_user(user)
-            flash("Welcome back to CookAI!", "success")
-            return redirect(url_for("home"))
-
-        flash("Incorrect email or password.", "error")
-
-    return render_template("login.html")
-
-
-@app.route("/logout", methods=["POST"])
-@login_required
-def logout():
-    logout_user()
-    flash("You have logged out successfully.", "success")
-    return redirect(url_for("home"))
-
-
-# -------------------------
-# EXISTING COOKAI ROUTES
-# -------------------------
-
-@app.route("/")
-def home():
-    return render_template("index.html")
-
+# -----------------------------
+# SCAN API — LOGIN REQUIRED
+# -----------------------------
 
 @app.route("/api/scan", methods=["POST"])
+@login_required
 def scan():
+
     if "images" not in request.files:
         return jsonify({
             "success": False,
@@ -360,7 +424,9 @@ def scan():
     detected = set()
 
     try:
+
         for image_file in files:
+
             if not image_file.filename:
                 continue
 
@@ -391,28 +457,37 @@ def scan():
         })
 
     except GeminiTemporaryError as error:
+
         return jsonify({
             "success": False,
             "error": str(error)
         }), 503
 
     except ValueError as error:
+
         return jsonify({
             "success": False,
             "error": str(error)
         }), 400
 
     except Exception:
+
         app.logger.exception("CookAI scanning failed")
 
         return jsonify({
             "success": False,
-            "error": "AI scanning failed. Please check the API configuration and try again."
+            "error": "AI scanning failed. Please try again."
         }), 500
 
 
+# -----------------------------
+# RECIPES API — LOGIN REQUIRED
+# -----------------------------
+
 @app.route("/api/recipes", methods=["POST"])
+@login_required
 def get_recipes():
+
     data = request.get_json(silent=True) or {}
     ingredients = data.get("ingredients", [])
 
@@ -442,18 +517,22 @@ def get_recipes():
     })
 
 
+# -----------------------------
+# FILE SIZE ERROR
+# -----------------------------
+
 @app.errorhandler(413)
 def file_too_large(error):
+
     return jsonify({
         "success": False,
         "error": "Total image size must be below 15 MB."
     }), 413
 
 
-# Create database tables automatically
-with app.app_context():
-    db.create_all()
-
+# -----------------------------
+# RUN APPLICATION
+# -----------------------------
 
 if __name__ == "__main__":
     app.run(debug=False, port=5000)
