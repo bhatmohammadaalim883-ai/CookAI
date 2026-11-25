@@ -31,8 +31,7 @@ body {
     line-height: 1.6;
 }
 
-button,
-input {
+button, input {
     font: inherit;
 }
 
@@ -58,7 +57,7 @@ a {
     z-index: 100;
     background: rgba(248, 251, 245, 0.94);
     backdrop-filter: blur(14px);
-    border-bottom: 1px solid rgba(227, 235, 225, 0.8);
+    border-bottom: 1px solid var(--border);
 }
 
 .nav-container {
@@ -131,7 +130,7 @@ a {
     padding: 15px 23px;
     font-size: 15px;
     font-weight: 700;
-    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    transition: 0.2s ease;
 }
 
 .primary-button {
@@ -234,7 +233,7 @@ a {
     align-items: center;
     gap: 9px;
     margin-top: 25px;
-    color: #718076;
+    color: var(--muted);
     font-size: 12px;
     font-weight: 600;
 }
@@ -445,8 +444,8 @@ a {
     padding: 30px 27px;
     border: 1px solid var(--border);
     border-radius: 19px;
-    background: #ffffff;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    background: white;
+    transition: 0.2s ease;
 }
 
 .step-card:hover {
@@ -548,7 +547,7 @@ a {
     border-radius: 18px;
     background: #fbfef9;
     text-align: center;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition: 0.2s ease;
     cursor: pointer;
 }
 
@@ -626,7 +625,6 @@ a {
     background: rgba(30, 45, 34, 0.8);
     color: white;
     font-size: 17px;
-    cursor: pointer;
 }
 
 .scanner-actions {
@@ -686,7 +684,7 @@ a {
 }
 
 
-/* RESULTS */
+/* INGREDIENT RESULTS */
 
 .results {
     margin-top: 35px;
@@ -728,7 +726,6 @@ a {
     color: #78947c;
     font-size: 17px;
     line-height: 1;
-    cursor: pointer;
 }
 
 .ingredient-chip button:hover {
@@ -806,8 +803,8 @@ a {
     padding: 22px;
     border: 1px solid var(--border);
     border-radius: 17px;
-    background: #ffffff;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    background: white;
+    transition: 0.2s ease;
 }
 
 .recipe-card:hover {
@@ -865,7 +862,7 @@ a {
 .footer {
     padding: 45px 5% 20px;
     background: #143d27;
-    color: #ffffff;
+    color: white;
     text-align: center;
 }
 
@@ -976,10 +973,6 @@ label:focus-visible {
 
     .hero-content > p {
         font-size: 15px;
-    }
-
-    .hero-actions {
-        align-items: stretch;
     }
 
     .hero-actions a {
