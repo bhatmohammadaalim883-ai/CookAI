@@ -198,6 +198,37 @@ def scan():
 
 
 @app.errorhandler(413)
+
+@app.route("/api/recipes", methods=["POST"])
+def get_recipes():
+    data = request.get_json(silent=True) or {}
+    ingredients = data.get("ingredients", [])
+
+    if not isinstance(ingredients, list):
+        return jsonify({
+            "success": False,
+            "error": "Invalid ingredient list."
+        }), 400
+
+    if len(ingredients) > 50:
+        return jsonify({
+            "success": False,
+            "error": "Too many ingredients."
+        }), 400
+
+    clean_ingredients = [
+        item.strip().lower()
+        for item in ingredients
+        if isinstance(item, str) and item.strip()
+    ]
+
+    recipes = recommend_recipes(clean_ingredients)
+
+    return jsonify({
+        "success": True,
+        "recipes": recipes
+    })
+
 def file_too_large(error):
     return jsonify({
         "success": False,
