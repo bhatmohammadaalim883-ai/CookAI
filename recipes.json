@@ -1,0 +1,80 @@
+
+[
+  {
+    "name": "Aloo Tamatar Curry",
+    "ingredients": ["potato", "tomato", "onion"],
+    "cuisine": "Indian",
+    "time": "30 minutes",
+    "instructions": [
+      "Wash and chop the vegetables.",
+      "Heat oil in a pan.",
+      "Cook the chopped onions.",
+      "Add tomatoes and spices.",
+      "Add potatoes and water.",
+      "Cook until the potatoes are soft."
+    ]
+  },
+  {
+    "name": "Vegetable Omelette",
+    "ingredients": ["egg", "onion", "tomato"],
+    "cuisine": "Indian",
+    "time": "15 minutes",
+    "instructions": [
+      "Beat the eggs in a bowl.",
+      "Chop the onions and tomatoes.",
+      "Mix the vegetables with the eggs.",
+      "Cook thoroughly in a heated pan."
+    ]
+  },
+  {
+    "name": "Potato Sandwich",
+    "ingredients": ["potato", "bread", "onion"],
+    "cuisine": "International",
+    "time": "20 minutes",
+    "instructions": [
+      "Boil and mash the potatoes.",
+      "Mix with chopped onions.",
+      "Spread the mixture on bread.",
+      "Toast until golden."
+    ]
+  },
+  {
+    "name": "Tomato Soup",
+    "ingredients": ["tomato", "onion", "garlic"],
+    "cuisine": "International",
+    "time": "25 minutes",
+    "instructions": [
+      "Wash and chop the tomatoes.",
+      "Cook onions and garlic in a pan.",
+      "Add tomatoes and water.",
+      "Cook until soft.",
+      "Blend carefully and serve warm."
+    ]
+  },
+  {
+    "name": "Vegetable Fried Rice",
+    "ingredients": ["rice", "carrot", "onion", "peas"],
+    "cuisine": "Asian",
+    "time": "25 minutes",
+    "instructions": [
+      "Cook the rice.",
+      "Chop the vegetables.",
+      "Cook the vegetables in a pan.",
+      "Add cooked rice.",
+      "Mix and cook until hot."
+    ]
+  },
+  {
+    "name": "Banana Pancakes",
+    "ingredients": ["banana", "egg", "milk", "flour"],
+    "cuisine": "International",
+    "time": "20 minutes",
+    "instructions": [
+      "Mash the banana.",
+      "Mix with egg, milk and flour.",
+      "Prepare a smooth batter.",
+      "Cook small portions in a pan.",
+      "Serve when fully cooked."
+    ]
+  }
+]
