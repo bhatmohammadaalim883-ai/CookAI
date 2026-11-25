@@ -9,17 +9,28 @@
 
     <title>CookAI - Scan, Cook, Enjoy</title>
 
-    <link rel="icon" type="image/svg+xml"
-          href="{{ url_for('static', filename='cookai-logo.svg') }}">
+    <!-- COOKAI BROWSER FAVICON -->
+    <link
+        rel="icon"
+        type="image/png"
+        sizes="512x512"
+        href="{{ url_for('static', filename='cookai-favicon.png') }}"
+    >
 
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}">
+    <!-- MAIN STYLESHEET -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
 
+    <!-- GOOGLE FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap"
-          rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap"
+        rel="stylesheet"
+    >
 </head>
 
 <body>
@@ -283,7 +294,8 @@
                                 type="text"
                                 id="manualIngredient"
                                 placeholder="Enter an ingredient..."
-                                maxlength="60">
+                                maxlength="60"
+                            >
 
                             <button
                                 type="button"
@@ -339,7 +351,8 @@
         <a href="/" class="footer-brand">
             <img
                 src="{{ url_for('static', filename='cookai-logo.svg') }}"
-                alt="CookAI Logo">
+                alt="CookAI Logo"
+            >
         </a>
 
         <p>
@@ -353,6 +366,7 @@
 
     </footer>
 
+    <!-- MAIN JAVASCRIPT -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 
 </body>
