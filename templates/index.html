@@ -4,11 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f8fbf5">
+    <meta name="description" content="CookAI identifies your kitchen ingredients with AI and recommends recipes.">
 
-    <meta name="theme-color" content="#f7fbf5">
-    <meta name="description" content="CookAI uses AI to identify your ingredients and discover delicious recipes.">
-
-    <title>CookAI - Scan, Discover, Cook</title>
+    <title>CookAI - Scan, Cook, Enjoy</title>
 
     <link rel="icon" type="image/svg+xml"
           href="{{ url_for('static', filename='cookai-logo.svg') }}">
@@ -32,7 +31,7 @@
             <a href="/" class="brand-link" aria-label="CookAI home">
                 <img
                     src="{{ url_for('static', filename='cookai-logo.svg') }}"
-                    alt="CookAI - Scan, Cook, Enjoy"
+                    alt="CookAI Logo"
                     class="logo"
                 >
             </a>
@@ -46,10 +45,9 @@
         </div>
     </header>
 
-
     <main>
 
-        <!-- HERO SECTION -->
+        <!-- HERO -->
         <section class="hero" id="home">
 
             <div class="hero-content">
@@ -72,12 +70,11 @@
 
                 <div class="hero-actions">
                     <a href="#scanner" class="primary-button">
-                        Start Cooking
-                        <span aria-hidden="true">→</span>
+                        Start Cooking <span>→</span>
                     </a>
 
                     <a href="#how-it-works" class="secondary-button">
-                        How it works
+                        How It Works
                     </a>
                 </div>
 
@@ -90,6 +87,7 @@
 
             <div class="hero-visual">
                 <div class="hero-image-card">
+
                     <div class="hero-card-top">
                         <span class="status-dot"></span>
                         COOKAI KITCHEN
@@ -105,11 +103,12 @@
 
                     <div class="hero-card-bottom">
                         <div>
-                            <strong>Fresh ingredients</strong>
+                            <strong>Fresh Ingredients</strong>
                             <span>New recipe possibilities</span>
                         </div>
                         <span class="sparkle">✦</span>
                     </div>
+
                 </div>
 
                 <div class="floating-note">
@@ -169,7 +168,7 @@
         </section>
 
 
-        <!-- SCANNER -->
+        <!-- INGREDIENT SCANNER -->
         <section class="scanner-section" id="scanner">
 
             <div class="section-heading">
@@ -204,7 +203,6 @@
                     >
 
                     <div class="upload-icon">☁️</div>
-
                     <h3>Drop your images here</h3>
 
                     <p>
@@ -223,15 +221,14 @@
                 <div
                     class="preview-grid"
                     id="previewContainer"
-                    aria-live="polite"
-                ></div>
+                    aria-live="polite">
+                </div>
 
                 <div class="scanner-actions">
                     <button
                         type="button"
                         class="primary-button scan-button"
-                        id="scanButton"
-                    >
+                        id="scanButton">
                         <span>✦</span>
                         Identify Ingredients with AI
                     </button>
@@ -241,8 +238,8 @@
                     class="loading hidden"
                     id="loading"
                     role="status"
-                    aria-live="polite"
-                >
+                    aria-live="polite">
+
                     <div class="spinner"></div>
                     <p>CookAI is analysing your ingredients...</p>
                     <small>This may take a few moments.</small>
@@ -251,11 +248,11 @@
                 <div
                     class="error-message hidden"
                     id="errorMessage"
-                    role="alert"
-                ></div>
+                    role="alert">
+                </div>
 
 
-                <!-- RESULTS -->
+                <!-- INGREDIENT RESULTS -->
                 <div class="results hidden" id="results">
 
                     <div class="results-divider"></div>
@@ -264,16 +261,16 @@
                         <span class="section-label">STEP 2</span>
                         <h3>Your Detected Ingredients</h3>
                         <p>
-                            Check the ingredients below. You can add
-                            or remove items before finding recipes.
+                            Check the ingredients below. Add or remove
+                            items before finding recipes.
                         </p>
                     </div>
 
                     <div
                         class="ingredient-list"
                         id="ingredientList"
-                        aria-live="polite"
-                    ></div>
+                        aria-live="polite">
+                    </div>
 
                     <div class="manual-ingredient-area">
 
@@ -286,14 +283,12 @@
                                 type="text"
                                 id="manualIngredient"
                                 placeholder="Enter an ingredient..."
-                                maxlength="60"
-                            >
+                                maxlength="60">
 
                             <button
                                 type="button"
                                 class="add-button"
-                                id="addIngredientButton"
-                            >
+                                id="addIngredientButton">
                                 + Add
                             </button>
                         </div>
@@ -304,10 +299,8 @@
                         <button
                             type="button"
                             class="primary-button find-button"
-                            id="findRecipesButton"
-                        >
-                            Discover My Recipes
-                            <span aria-hidden="true">→</span>
+                            id="findRecipesButton">
+                            Discover My Recipes <span>→</span>
                         </button>
                     </div>
 
@@ -319,16 +312,16 @@
                             <span class="section-label">STEP 3</span>
                             <h3>Recipes For You</h3>
                             <p>
-                                Here are some dishes you can make
-                                with your ingredients.
+                                Discover dishes you can make with
+                                your available ingredients.
                             </p>
                         </div>
 
                         <div
                             class="recipe-grid"
                             id="recipeContainer"
-                            aria-live="polite"
-                        ></div>
+                            aria-live="polite">
+                        </div>
 
                     </div>
 
@@ -337,30 +330,28 @@
             </div>
         </section>
 
-
-        <!-- FOOTER -->
-        <footer class="footer">
-
-            <a href="/" class="footer-brand">
-                <img
-                    src="{{ url_for('static', filename='cookai-logo.svg') }}"
-                    alt="CookAI logo"
-                >
-            </a>
-
-            <p>
-                Making everyday cooking smarter, simpler and more creative.
-            </p>
-
-            <div class="footer-bottom">
-                <span>© 2026 CookAI. All rights reserved.</span>
-                <span>Made with ✦ for food lovers.</span>
-            </div>
-
-        </footer>
-
     </main>
 
+
+    <!-- FOOTER -->
+    <footer class="footer">
+
+        <a href="/" class="footer-brand">
+            <img
+                src="{{ url_for('static', filename='cookai-logo.svg') }}"
+                alt="CookAI Logo">
+        </a>
+
+        <p>
+            Making everyday cooking smarter, simpler and more creative.
+        </p>
+
+        <div class="footer-bottom">
+            <span>© 2026 CookAI. All rights reserved.</span>
+            <span>Made with ✦ for food lovers.</span>
+        </div>
+
+    </footer>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 
