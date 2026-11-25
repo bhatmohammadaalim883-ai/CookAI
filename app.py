@@ -4,19 +4,80 @@ import json
 import time
 from io import BytesIO
 
-from flask import Flask, render_template, request, jsonify
+from flask import (
+    Flask, render_template, request, jsonify,
+    redirect, url_for, flash
+)
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from PIL import Image, UnidentifiedImageError
 
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import (
+    LoginManager, UserMixin, login_user,
+    logout_user, login_required, current_user
+)
+from werkzeug.security import generate_password_hash, check_password_hash
+
 load_dotenv()
 
 app = Flask(__name__)
+
+# Security configuration
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+
+if not app.config["SECRET_KEY"]:
+    raise RuntimeError("SECRET_KEY environment variable is missing.")
+
 app.config["MAX_CONTENT_LENGTH"] = 15 * 1024 * 1024
 
+# SQLite database configuration
+os.makedirs(app.instance_path, exist_ok=True)
+
+DATABASE_PATH = os.getenv(
+    "DATABASE_PATH",
+    os.path.join(app.instance_path, "cookai.db")
+)
+
+os.makedirs(os.path.dirname(os.path.abspath(DATABASE_PATH)), exist_ok=True)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = (
+    "sqlite:///" + os.path.abspath(DATABASE_PATH)
+)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db = SQLAlchemy(app)
+
+# Login configuration
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
+login_manager.login_message = "Please log in to access this page."
+
+
+# User database model
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return db.session.get(User, int(user_id))
+
+
+# Gemini configuration
 API_KEY = os.getenv("GEMINI_API_KEY")
-MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
 client = genai.Client(api_key=API_KEY) if API_KEY else None
 
@@ -36,7 +97,6 @@ def load_recipes():
 
 
 def get_error_status(error):
-    """Extract an HTTP status code from a Gemini API error."""
     status = getattr(error, "code", None)
 
     if not isinstance(status, int):
@@ -128,7 +188,6 @@ def detect_ingredients(image_file):
 
         except Exception as error:
             status = get_error_status(error)
-
             temporary_errors = {429, 500, 502, 503, 504}
 
             if status not in temporary_errors:
@@ -192,6 +251,90 @@ def recommend_recipes(ingredients):
 
     return recommendations
 
+
+# -------------------------
+# AUTHENTICATION ROUTES
+# -------------------------
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if current_user.is_authenticated:
+        return redirect(url_for("home"))
+
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+
+        if not username or not email or not password:
+            flash("Please fill in all fields.", "error")
+            return render_template("signup.html")
+
+        if len(username) > 50:
+            flash("Username must be 50 characters or fewer.", "error")
+            return render_template("signup.html")
+
+        if len(password) < 8:
+            flash("Password must contain at least 8 characters.", "error")
+            return render_template("signup.html")
+
+        existing_user = User.query.filter(
+            (User.username == username) | (User.email == email)
+        ).first()
+
+        if existing_user:
+            flash("Username or email already exists.", "error")
+            return render_template("signup.html")
+
+        new_user = User(
+            username=username,
+            email=email
+        )
+        new_user.set_password(password)
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        login_user(new_user)
+
+        flash("Your CookAI account was created successfully!", "success")
+        return redirect(url_for("home"))
+
+    return render_template("signup.html")
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for("home"))
+
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+
+        user = User.query.filter_by(email=email).first()
+
+        if user and user.check_password(password):
+            login_user(user)
+            flash("Welcome back to CookAI!", "success")
+            return redirect(url_for("home"))
+
+        flash("Incorrect email or password.", "error")
+
+    return render_template("login.html")
+
+
+@app.route("/logout", methods=["POST"])
+@login_required
+def logout():
+    logout_user()
+    flash("You have logged out successfully.", "success")
+    return redirect(url_for("home"))
+
+
+# -------------------------
+# EXISTING COOKAI ROUTES
+# -------------------------
 
 @app.route("/")
 def home():
@@ -305,6 +448,11 @@ def file_too_large(error):
         "success": False,
         "error": "Total image size must be below 15 MB."
     }), 413
+
+
+# Create database tables automatically
+with app.app_context():
+    db.create_all()
 
 
 if __name__ == "__main__":
