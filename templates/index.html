@@ -38,9 +38,10 @@
             <nav class="nav-links">
                 <a href="#home">Home</a>
                 <a href="#how-it-works">How It Works</a>
-                <a href="#scanner" class="nav-cta">Try CookAI</a>
 
                 {% if current_user.is_authenticated %}
+
+                    <a href="#scanner" class="nav-cta">Try CookAI</a>
 
                     <span class="nav-user">
                         Hello, {{ current_user.username }}
@@ -57,6 +58,8 @@
                     </form>
 
                 {% else %}
+
+                    <a href="#scanner" class="nav-cta">Try CookAI</a>
 
                     <a href="{{ url_for('login') }}" class="nav-cta">
                         Login
@@ -97,13 +100,25 @@
                 </p>
 
                 <div class="hero-actions">
-                    <a href="#scanner" class="primary-button">
-                        Start Cooking <span>→</span>
-                    </a>
+
+                    {% if current_user.is_authenticated %}
+
+                        <a href="#scanner" class="primary-button">
+                            Start Cooking <span>→</span>
+                        </a>
+
+                    {% else %}
+
+                        <a href="{{ url_for('signup') }}" class="primary-button">
+                            Get Started <span>→</span>
+                        </a>
+
+                    {% endif %}
 
                     <a href="#how-it-works" class="secondary-button">
                         How It Works
                     </a>
+
                 </div>
 
                 <div class="hero-note">
@@ -194,155 +209,203 @@
             </div>
         </section>
 
-        <!-- INGREDIENT SCANNER -->
+        <!-- SCANNER ACCESS -->
         <section class="scanner-section" id="scanner">
 
-            <div class="section-heading">
-                <span class="section-label">LET'S GET COOKING</span>
-                <h2>What's in Your Kitchen?</h2>
-                <p>
-                    Upload photographs of your ingredients and let
-                    CookAI do the discovery.
-                </p>
-            </div>
+            {% if current_user.is_authenticated %}
 
-            <div class="scanner-panel">
+                <!-- LOGGED-IN SCANNER -->
 
-                <div class="scanner-heading">
-                    <div>
-                        <span class="scanner-label">STEP 1</span>
-                        <h3>Upload Your Ingredients</h3>
-                        <p>Select up to 5 ingredient photographs.</p>
-                    </div>
-
-                    <span class="scanner-icon">🥗</span>
-                </div>
-
-                <div class="upload-box" id="uploadBox">
-
-                    <input
-                        type="file"
-                        id="imageInput"
-                        accept="image/jpeg,image/png,image/webp"
-                        multiple
-                        hidden>
-
-                    <div class="upload-icon">☁️</div>
-                    <h3>Drop your images here</h3>
-
+                <div class="section-heading">
+                    <span class="section-label">LET'S GET COOKING</span>
+                    <h2>What's in Your Kitchen?</h2>
                     <p>
-                        or
-                        <label for="imageInput" class="browse-link">
-                            browse files
-                        </label>
+                        Upload photographs of your ingredients and let
+                        CookAI do the discovery.
                     </p>
-
-                    <span class="upload-hint">
-                        JPG, PNG or WEBP · Maximum 5 images
-                    </span>
-
                 </div>
 
-                <div class="preview-grid"
-                     id="previewContainer"
-                     aria-live="polite">
-                </div>
+                <div class="scanner-panel">
 
-                <div class="scanner-actions">
-                    <button type="button"
-                            class="primary-button scan-button"
-                            id="scanButton">
-                        <span>✦</span>
-                        Identify Ingredients with AI
-                    </button>
-                </div>
+                    <div class="scanner-heading">
+                        <div>
+                            <span class="scanner-label">STEP 1</span>
+                            <h3>Upload Your Ingredients</h3>
+                            <p>Select up to 5 ingredient photographs.</p>
+                        </div>
 
-                <div class="loading hidden"
-                     id="loading"
-                     role="status"
-                     aria-live="polite">
-
-                    <div class="spinner"></div>
-                    <p>CookAI is analysing your ingredients...</p>
-                    <small>This may take a few moments.</small>
-                </div>
-
-                <div class="error-message hidden"
-                     id="errorMessage"
-                     role="alert">
-                </div>
-
-                <!-- INGREDIENT RESULTS -->
-                <div class="results hidden" id="results">
-
-                    <div class="results-divider"></div>
-
-                    <div class="results-heading">
-                        <span class="section-label">STEP 2</span>
-                        <h3>Your Detected Ingredients</h3>
-                        <p>
-                            Check the ingredients below. Add or remove
-                            items before finding recipes.
-                        </p>
+                        <span class="scanner-icon">🥗</span>
                     </div>
 
-                    <div class="ingredient-list"
-                         id="ingredientList"
+                    <div class="upload-box" id="uploadBox">
+
+                        <input
+                            type="file"
+                            id="imageInput"
+                            accept="image/jpeg,image/png,image/webp"
+                            multiple
+                            hidden>
+
+                        <div class="upload-icon">☁️</div>
+                        <h3>Drop your images here</h3>
+
+                        <p>
+                            or
+                            <label for="imageInput" class="browse-link">
+                                browse files
+                            </label>
+                        </p>
+
+                        <span class="upload-hint">
+                            JPG, PNG or WEBP · Maximum 5 images
+                        </span>
+
+                    </div>
+
+                    <div class="preview-grid"
+                         id="previewContainer"
                          aria-live="polite">
                     </div>
 
-                    <div class="manual-ingredient-area">
-
-                        <label for="manualIngredient">
-                            Missing an ingredient?
-                        </label>
-
-                        <div class="manual-input-row">
-                            <input
-                                type="text"
-                                id="manualIngredient"
-                                placeholder="Enter an ingredient..."
-                                maxlength="60">
-
-                            <button type="button"
-                                    class="add-button"
-                                    id="addIngredientButton">
-                                + Add
-                            </button>
-                        </div>
-
-                    </div>
-
-                    <div class="find-recipes-area">
+                    <div class="scanner-actions">
                         <button type="button"
-                                class="primary-button find-button"
-                                id="findRecipesButton">
-                            Discover My Recipes <span>→</span>
+                                class="primary-button scan-button"
+                                id="scanButton">
+                            <span>✦</span>
+                            Identify Ingredients with AI
                         </button>
                     </div>
 
-                    <!-- RECIPE RESULTS -->
-                    <div class="recipe-results">
+                    <div class="loading hidden"
+                         id="loading"
+                         role="status"
+                         aria-live="polite">
+
+                        <div class="spinner"></div>
+                        <p>CookAI is analysing your ingredients...</p>
+                        <small>This may take a few moments.</small>
+                    </div>
+
+                    <div class="error-message hidden"
+                         id="errorMessage"
+                         role="alert">
+                    </div>
+
+                    <!-- INGREDIENT RESULTS -->
+                    <div class="results hidden" id="results">
+
+                        <div class="results-divider"></div>
 
                         <div class="results-heading">
-                            <span class="section-label">STEP 3</span>
-                            <h3>Recipes For You</h3>
+                            <span class="section-label">STEP 2</span>
+                            <h3>Your Detected Ingredients</h3>
                             <p>
-                                Discover dishes you can make with
-                                your available ingredients.
+                                Check the ingredients below. Add or remove
+                                items before finding recipes.
                             </p>
                         </div>
 
-                        <div class="recipe-grid"
-                             id="recipeContainer"
+                        <div class="ingredient-list"
+                             id="ingredientList"
                              aria-live="polite">
+                        </div>
+
+                        <div class="manual-ingredient-area">
+
+                            <label for="manualIngredient">
+                                Missing an ingredient?
+                            </label>
+
+                            <div class="manual-input-row">
+                                <input
+                                    type="text"
+                                    id="manualIngredient"
+                                    placeholder="Enter an ingredient..."
+                                    maxlength="60">
+
+                                <button type="button"
+                                        class="add-button"
+                                        id="addIngredientButton">
+                                    + Add
+                                </button>
+                            </div>
+
+                        </div>
+
+                        <div class="find-recipes-area">
+                            <button type="button"
+                                    class="primary-button find-button"
+                                    id="findRecipesButton">
+                                Discover My Recipes <span>→</span>
+                            </button>
+                        </div>
+
+                        <!-- RECIPE RESULTS -->
+                        <div class="recipe-results">
+
+                            <div class="results-heading">
+                                <span class="section-label">STEP 3</span>
+                                <h3>Recipes For You</h3>
+                                <p>
+                                    Discover dishes you can make with
+                                    your available ingredients.
+                                </p>
+                            </div>
+
+                            <div class="recipe-grid"
+                                 id="recipeContainer"
+                                 aria-live="polite">
+                            </div>
+
                         </div>
 
                     </div>
 
                 </div>
 
-            </div>
+            {% else %}
+
+                <!-- LOGGED-OUT ACCESS MESSAGE -->
+
+                <div class="section-heading">
+                    <span class="section-label">YOUR KITCHEN AWAITS</span>
+                    <h2>Ready to Discover What's Cooking?</h2>
+                    <p>
+                        Create your free CookAI account or log in
+                        to unlock ingredient scanning and recipe discovery.
+                    </p>
+                </div>
+
+                <div class="scanner-panel" style="text-align:center;">
+
+                    <div class="step-icon">🔐</div>
+
+                    <h3>Sign In to Unlock CookAI</h3>
+
+                    <p>
+                        Ingredient scanning and recipe recommendations
+                        are available to registered users.
+                    </p>
+
+                    <div class="hero-actions"
+                         style="justify-content:center; margin-top:25px;">
+
+                        <a href="{{ url_for('signup') }}"
+                           class="primary-button">
+                            Create Account <span>→</span>
+                        </a>
+
+                        <a href="{{ url_for('login') }}"
+                           class="secondary-button">
+                            Login
+                        </a>
+
+                    </div>
+
+                </div>
+
+            {% endif %}
+
         </section>
 
     </main>
@@ -367,7 +430,9 @@
 
     </footer>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    {% if current_user.is_authenticated %}
+        <script src="{{ url_for('static', filename='script.js') }}"></script>
+    {% endif %}
 
 </body>
 </html>
