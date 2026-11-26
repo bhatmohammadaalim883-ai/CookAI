@@ -37,10 +37,14 @@ if not SECRET_KEY:
 app.config["SECRET_KEY"] = SECRET_KEY
 app.config["MAX_CONTENT_LENGTH"] = 15 * 1024 * 1024
 
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
-    "DATABASE_URL",
-    "sqlite:///cookai.db"
-)
+database_url = os.getenv("DATABASE_URL", "sqlite:///cookai.db")
+
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace(
+        "postgres://", "postgresql://", 1
+    )
+
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
@@ -72,7 +76,6 @@ def load_user(user_id):
     return db.session.get(User, int(user_id))
 
 
-# Create database tables if they do not exist.
 with app.app_context():
     db.create_all()
 
@@ -91,6 +94,72 @@ ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 
 class GeminiTemporaryError(Exception):
     pass
+
+
+# -----------------------------
+# INGREDIENT NORMALIZATION
+# -----------------------------
+
+INGREDIENT_ALIASES = {
+    "red chilli powder": "chili powder",
+    "red chili powder": "chili powder",
+    "chilli powder": "chili powder",
+    "chile powder": "chili powder",
+    "green chilli": "green chili",
+    "green chillies": "green chili",
+    "green chilies": "green chili",
+    "bell pepper": "bell pepper",
+    "capsicum": "bell pepper",
+    "spring onion": "spring onion",
+    "scallion": "spring onion",
+    "scallions": "spring onion",
+    "aubergine": "eggplant",
+    "courgette": "zucchini",
+    "coriander leaves": "cilantro",
+    "fresh coriander": "cilantro",
+    "ground beef": "beef",
+    "minced beef": "beef",
+    "ground lamb": "lamb",
+    "minced lamb": "lamb",
+    "prawns": "shrimp",
+    "prawn": "shrimp",
+    "chicken meat": "chicken",
+    "fish fillet": "fish",
+    "fish fillets": "fish"
+}
+
+
+def normalize_ingredient(ingredient):
+
+    if not isinstance(ingredient, str):
+        return ""
+
+    ingredient = ingredient.strip().lower()
+    ingredient = " ".join(ingredient.split())
+
+    return INGREDIENT_ALIASES.get(ingredient, ingredient)
+
+
+# Main protein categories.
+# A recipe requiring a different protein will not be recommended.
+
+PROTEIN_GROUPS = {
+    "chicken": {"chicken"},
+    "beef": {"beef"},
+    "lamb": {"lamb"},
+    "fish": {"fish"},
+    "egg": {"egg"},
+    "pork": {"pork"},
+    "shrimp": {"shrimp"},
+    "turkey": {"turkey"},
+    "duck": {"duck"}
+}
+
+PROTEIN_INGREDIENTS = set().union(*PROTEIN_GROUPS.values())
+
+
+def get_proteins(ingredients):
+    return set(ingredients) & PROTEIN_INGREDIENTS
 
 
 # -----------------------------
@@ -217,42 +286,102 @@ def load_recipes():
 
     try:
         with open("recipes.json", "r", encoding="utf-8") as file:
-            return json.load(file)
+            recipes = json.load(file)
+
+        if not isinstance(recipes, list):
+            app.logger.error("recipes.json must contain a JSON list.")
+            return []
+
+        return recipes
 
     except (FileNotFoundError, json.JSONDecodeError):
+        app.logger.exception("Could not load recipes.json")
         return []
 
+
+# -----------------------------
+# SMART RECIPE RECOMMENDATION
+# -----------------------------
 
 def recommend_recipes(ingredients):
 
     recipes = load_recipes()
-    available = set(ingredients)
+
+    available = {
+        normalize_ingredient(item)
+        for item in ingredients
+        if normalize_ingredient(item)
+    }
+
+    detected_proteins = get_proteins(available)
+
     recommendations = []
 
     for recipe in recipes:
 
-        required = set(recipe.get("ingredients", []))
+        recipe_ingredients = {
+            normalize_ingredient(item)
+            for item in recipe.get("ingredients", [])
+            if normalize_ingredient(item)
+        }
 
-        if not required:
+        if not recipe_ingredients:
             continue
 
-        matched = sorted(required & available)
-        missing = sorted(required - available)
+        recipe_proteins = get_proteins(recipe_ingredients)
+
+        # If the user has identified a protein, only recommend
+        # recipes containing that same protein.
+        if detected_proteins:
+
+            if not recipe_proteins:
+                continue
+
+            if not recipe_proteins.issubset(detected_proteins):
+                continue
+
+        # Do not recommend meat recipes when no matching
+        # meat or protein has been identified.
+        elif recipe_proteins:
+            continue
+
+        matched = sorted(recipe_ingredients & available)
+        missing = sorted(recipe_ingredients - available)
 
         if not matched:
             continue
 
-        percentage = round(len(matched) / len(required) * 100)
+        # For protein recipes, the protein itself is essential.
+        if recipe_proteins and not (recipe_proteins & available):
+            continue
+
+        # Prevent recommendations based on just one common
+        # ingredient such as tomato or onion.
+        if len(matched) < 2 and not recipe_proteins:
+            continue
+
+        percentage = round(
+            len(matched) / len(recipe_ingredients) * 100
+        )
+
+        # Give priority to recipes matching their main protein.
+        primary_match = bool(recipe_proteins & available)
 
         recommendations.append({
             **recipe,
             "matched_ingredients": matched,
             "missing_ingredients": missing,
-            "match_percentage": percentage
+            "match_percentage": percentage,
+            "matched_count": len(matched),
+            "primary_match": primary_match
         })
 
     recommendations.sort(
-        key=lambda recipe: recipe["match_percentage"],
+        key=lambda recipe: (
+            recipe["primary_match"],
+            recipe["match_percentage"],
+            recipe["matched_count"]
+        ),
         reverse=True
     )
 
@@ -320,12 +449,16 @@ def detect_ingredients(image_file):
     Only identify ingredients that are clearly visible.
     Do not guess hidden ingredients or complete dishes.
 
-    Return valid JSON only:
-    {
-      "ingredients": ["potato", "tomato", "onion"]
-    }
+    Identify the actual ingredient as specifically as possible.
+    For example, distinguish chicken from other meats.
 
     Use simple English ingredient names.
+    Keep spices separate from vegetables and proteins.
+
+    Return valid JSON only:
+    {
+      "ingredients": ["chicken", "tomato", "red chili powder"]
+    }
     """
 
     for attempt in range(3):
@@ -356,10 +489,10 @@ def detect_ingredients(image_file):
                 raise ValueError("Invalid AI response.")
 
             return sorted({
-                item.strip().lower()
+                normalize_ingredient(item)
                 for item in ingredients
                 if isinstance(item, str) and item.strip()
-            })
+            } - {""})
 
         except ValueError:
             raise
@@ -449,11 +582,17 @@ def scan():
         ingredients = sorted(detected)
         recipes = recommend_recipes(ingredients)
 
+        message = (
+            "Ingredients identified successfully!"
+            if recipes
+            else "Ingredients identified, but no suitable recipes were found."
+        )
+
         return jsonify({
             "success": True,
             "ingredients": ingredients,
             "recipes": recipes,
-            "message": "Ingredients identified successfully!"
+            "message": message
         })
 
     except GeminiTemporaryError as error:
@@ -504,7 +643,7 @@ def get_recipes():
         }), 400
 
     clean_ingredients = [
-        item.strip().lower()
+        normalize_ingredient(item)
         for item in ingredients
         if isinstance(item, str) and item.strip()
     ]
@@ -513,7 +652,12 @@ def get_recipes():
 
     return jsonify({
         "success": True,
-        "recipes": recipes
+        "recipes": recipes,
+        "message": (
+            "Recipes found successfully!"
+            if recipes
+            else "No suitable recipes found. Try adding different ingredients."
+        )
     })
 
 
