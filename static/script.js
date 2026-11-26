@@ -41,7 +41,7 @@ function clearError() {
 // -----------------------------
 
 function cleanIngredient(value) {
-    return value.trim().toLowerCase().replace(/\s+/g, " ");
+    return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
 }
 
 function getManualIngredients() {
@@ -88,6 +88,43 @@ function validateIngredients(ingredients) {
     }
 
     return true;
+}
+
+// -----------------------------
+// GENERAL ELEMENT HELPERS
+// -----------------------------
+
+function createElement(tag, className, text) {
+    const element = document.createElement(tag);
+
+    if (className) {
+        element.className = className;
+    }
+
+    if (text !== undefined && text !== null) {
+        element.textContent = String(text);
+    }
+
+    return element;
+}
+
+function createIngredientList(items, emptyMessage) {
+    const list = document.createElement("ul");
+
+    if (!Array.isArray(items) || items.length === 0) {
+        const item = document.createElement("li");
+        item.textContent = emptyMessage;
+        list.appendChild(item);
+        return list;
+    }
+
+    items.forEach(ingredient => {
+        const item = document.createElement("li");
+        item.textContent = String(ingredient);
+        list.appendChild(item);
+    });
+
+    return list;
 }
 
 // -----------------------------
@@ -267,7 +304,6 @@ scanButton.addEventListener("click", async () => {
             throw new Error(data.error || "Something went wrong.");
         }
 
-        // Combine AI-detected ingredients with manually typed ingredients.
         const typedIngredients = getManualIngredients();
 
         detectedIngredients = combineIngredients(
@@ -306,8 +342,10 @@ function addSingleIngredient() {
         return;
     }
 
-    if (detectedIngredients.length >= MAX_INGREDIENTS &&
-        !detectedIngredients.includes(ingredient)) {
+    if (
+        detectedIngredients.length >= MAX_INGREDIENTS &&
+        !detectedIngredients.includes(ingredient)
+    ) {
         showError("You can use a maximum of 50 ingredients.");
         return;
     }
@@ -351,7 +389,6 @@ manualFindRecipesButton.addEventListener("click", () => {
     }
 
     recipeContainer.replaceChildren();
-
     showIngredientResults();
 });
 
@@ -402,13 +439,165 @@ async function discoverRecipes() {
 findRecipesButton.addEventListener("click", discoverRecipes);
 
 // -----------------------------
+// RECIPE QUANTITIES
+// -----------------------------
+
+function renderRecipeQuantities(recipe) {
+    const section = createElement("section", "recipe-quantities");
+
+    section.appendChild(
+        createElement("h4", "", "Ingredient Quantities")
+    );
+
+    const quantities = Array.isArray(recipe.ingredient_quantities)
+        ? recipe.ingredient_quantities
+        : [];
+
+    if (quantities.length === 0) {
+        section.appendChild(
+            createElement(
+                "p",
+                "",
+                "Quantities are not available for this recipe."
+            )
+        );
+
+        return section;
+    }
+
+    const list = document.createElement("ul");
+
+    quantities.forEach(item => {
+        if (!item || typeof item !== "object") {
+            return;
+        }
+
+        const name = String(item.name || "").trim();
+        const quantity = String(item.quantity || "").trim();
+
+        if (!name || !quantity) {
+            return;
+        }
+
+        const listItem = document.createElement("li");
+        listItem.textContent = `${name}: ${quantity}`;
+        list.appendChild(listItem);
+    });
+
+    if (!list.children.length) {
+        section.appendChild(
+            createElement("p", "", "Quantities are not available for this recipe.")
+        );
+    } else {
+        section.appendChild(list);
+    }
+
+    return section;
+}
+
+// -----------------------------
+// RECIPE INSTRUCTIONS
+// -----------------------------
+
+function renderRecipeInstructions(recipe) {
+    const section = createElement("section", "recipe-instructions");
+
+    section.appendChild(
+        createElement("h4", "", "Step-by-Step Cooking Instructions")
+    );
+
+    const instructions = Array.isArray(recipe.instructions)
+        ? recipe.instructions
+        : [];
+
+    if (instructions.length === 0) {
+        section.appendChild(
+            createElement("p", "", "Cooking instructions are not available.")
+        );
+
+        return section;
+    }
+
+    const list = document.createElement("ol");
+
+    instructions.forEach(step => {
+        if (!step || typeof step !== "string") {
+            return;
+        }
+
+        const item = document.createElement("li");
+        item.textContent = step;
+        list.appendChild(item);
+    });
+
+    section.appendChild(list);
+
+    return section;
+}
+
+// -----------------------------
+// FULL RECIPE VIEW
+// -----------------------------
+
+function createFullRecipeView(recipe) {
+    const fullRecipe = createElement("div", "full-recipe-details");
+    fullRecipe.hidden = true;
+
+    // Ingredient quantities
+    fullRecipe.appendChild(renderRecipeQuantities(recipe));
+
+    // Available ingredients
+    const availableSection = createElement(
+        "section",
+        "available-ingredients"
+    );
+
+    availableSection.appendChild(
+        createElement("h4", "", "Ingredients You Have")
+    );
+
+    availableSection.appendChild(
+        createIngredientList(
+            recipe.matched_ingredients,
+            "No matching ingredients."
+        )
+    );
+
+    fullRecipe.appendChild(availableSection);
+
+    // Missing ingredients
+    const missingSection = createElement(
+        "section",
+        "missing-ingredients"
+    );
+
+    missingSection.appendChild(
+        createElement("h4", "", "Ingredients You Still Need")
+    );
+
+    missingSection.appendChild(
+        createIngredientList(
+            recipe.missing_ingredients,
+            "You have all the listed ingredients!"
+        )
+    );
+
+    fullRecipe.appendChild(missingSection);
+
+    // Cooking instructions
+    fullRecipe.appendChild(renderRecipeInstructions(recipe));
+
+    return fullRecipe;
+}
+
+// -----------------------------
 // RENDER RECIPES
 // -----------------------------
 
 function renderRecipes(recipes) {
     recipeContainer.replaceChildren();
 
-    if (!recipes.length) {
+    if (!Array.isArray(recipes) || !recipes.length) {
         const message = document.createElement("p");
 
         message.textContent =
@@ -419,55 +608,111 @@ function renderRecipes(recipes) {
     }
 
     recipes.forEach(recipe => {
-        const card = document.createElement("article");
-        card.className = "recipe-card";
+        const card = createElement("article", "recipe-card");
 
-        const title = document.createElement("h3");
-        title.textContent = "🍽️ " + recipe.name;
+        // Recipe name
+        const title = createElement(
+            "h3",
+            "recipe-title",
+            "🍽️ " + (recipe.name || "Untitled Recipe")
+        );
 
-        const cuisine = document.createElement("p");
-        cuisine.textContent = "Cuisine: " + recipe.cuisine;
+        // Cuisine
+        const cuisine = createElement(
+            "p",
+            "recipe-cuisine",
+            "Cuisine: " + (recipe.cuisine || "Not specified")
+        );
 
-        const time = document.createElement("p");
-        time.textContent = "Preparation time: " + recipe.time;
+        // Preparation time
+        const time = createElement(
+            "p",
+            "recipe-time",
+            "Preparation time: " + (recipe.time || "Not specified")
+        );
 
-        const match = document.createElement("p");
-        match.className = "match";
-        match.textContent =
-            recipe.match_percentage + "% ingredient match";
+        // Difficulty
+        const difficulty = createElement(
+            "p",
+            "recipe-difficulty",
+            "Difficulty: " + (recipe.difficulty || "Not specified")
+        );
 
-        const matched = document.createElement("p");
-        matched.textContent =
-            "Available: " + recipe.matched_ingredients.join(", ");
+        // Ingredient match percentage
+        const percentage = Number(recipe.match_percentage);
 
-        const missing = document.createElement("p");
-        missing.textContent = recipe.missing_ingredients.length
-            ? "Still needed: " + recipe.missing_ingredients.join(", ")
-            : "You have all listed ingredients!";
+        const match = createElement(
+            "p",
+            "match",
+            Number.isFinite(percentage)
+                ? `${percentage}% ingredient match`
+                : "Ingredient match information unavailable"
+        );
 
-        const details = document.createElement("details");
+        // Available ingredients
+        const matched = createElement(
+            "p",
+            "available-summary",
+            "Available ingredients: " +
+                (
+                    Array.isArray(recipe.matched_ingredients) &&
+                    recipe.matched_ingredients.length
+                        ? recipe.matched_ingredients.join(", ")
+                        : "None"
+                )
+        );
 
-        const summary = document.createElement("summary");
-        summary.textContent = "View cooking instructions";
+        // Missing ingredients
+        const missing = createElement(
+            "p",
+            "missing-summary",
+            "Still needed: " +
+                (
+                    Array.isArray(recipe.missing_ingredients) &&
+                    recipe.missing_ingredients.length
+                        ? recipe.missing_ingredients.join(", ")
+                        : "None — you have all listed ingredients!"
+                )
+        );
 
-        const instructions = document.createElement("ol");
+        // View Full Recipe button
+        const viewButton = createElement(
+            "button",
+            "view-recipe-button",
+            "View Full Recipe"
+        );
 
-        (recipe.instructions || []).forEach(step => {
-            const item = document.createElement("li");
-            item.textContent = step;
-            instructions.appendChild(item);
+        viewButton.type = "button";
+        viewButton.setAttribute("aria-expanded", "false");
+
+        // Expandable full recipe
+        const fullRecipe = createFullRecipeView(recipe);
+
+        viewButton.addEventListener("click", () => {
+            const isExpanded = !fullRecipe.hidden;
+
+            fullRecipe.hidden = isExpanded;
+
+            viewButton.textContent = isExpanded
+                ? "View Full Recipe"
+                : "Hide Full Recipe";
+
+            viewButton.setAttribute(
+                "aria-expanded",
+                String(!isExpanded)
+            );
         });
-
-        details.append(summary, instructions);
 
         card.append(
             title,
             cuisine,
             time,
+            difficulty,
             match,
             matched,
             missing,
-            details
+            viewButton,
+            fullRecipe
         );
 
         recipeContainer.appendChild(card);
