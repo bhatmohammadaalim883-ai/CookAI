@@ -3,6 +3,15 @@
   {
     "name": "Aloo Tamatar Curry",
     "ingredients": ["potato", "tomato", "onion", "oil", "turmeric", "chili powder"],
+    "ingredient_quantities": [
+      {"name": "potato", "quantity": "3 medium"},
+      {"name": "tomato", "quantity": "2 medium"},
+      {"name": "onion", "quantity": "1 medium"},
+      {"name": "oil", "quantity": "2 tablespoons"},
+      {"name": "turmeric", "quantity": "1/2 teaspoon"},
+      {"name": "chili powder", "quantity": "1/2 teaspoon"}
+    ],
+    "difficulty": "Easy",
     "cuisine": "Indian",
     "time": "30 minutes",
     "instructions": [
@@ -17,6 +26,14 @@
   {
     "name": "Vegetable Omelette",
     "ingredients": ["egg", "onion", "tomato", "salt", "pepper"],
+    "ingredient_quantities": [
+      {"name": "egg", "quantity": "4 large"},
+      {"name": "onion", "quantity": "1/2 medium"},
+      {"name": "tomato", "quantity": "1 small"},
+      {"name": "salt", "quantity": "1/2 teaspoon"},
+      {"name": "pepper", "quantity": "1/4 teaspoon"}
+    ],
+    "difficulty": "Easy",
     "cuisine": "Indian",
     "time": "15 minutes",
     "instructions": [
@@ -30,6 +47,14 @@
   {
     "name": "Potato Sandwich",
     "ingredients": ["potato", "bread", "onion", "butter", "salt"],
+    "ingredient_quantities": [
+      {"name": "potato", "quantity": "2 medium"},
+      {"name": "bread", "quantity": "4 slices"},
+      {"name": "onion", "quantity": "1/2 medium"},
+      {"name": "butter", "quantity": "2 tablespoons"},
+      {"name": "salt", "quantity": "1/2 teaspoon"}
+    ],
+    "difficulty": "Easy",
     "cuisine": "International",
     "time": "20 minutes",
     "instructions": [
@@ -42,6 +67,15 @@
   {
     "name": "Tomato Soup",
     "ingredients": ["tomato", "onion", "garlic", "water", "salt", "pepper"],
+    "ingredient_quantities": [
+      {"name": "tomato", "quantity": "5 medium"},
+      {"name": "onion", "quantity": "1 medium"},
+      {"name": "garlic", "quantity": "3 cloves"},
+      {"name": "water", "quantity": "3 cups"},
+      {"name": "salt", "quantity": "1 teaspoon"},
+      {"name": "pepper", "quantity": "1/4 teaspoon"}
+    ],
+    "difficulty": "Easy",
     "cuisine": "International",
     "time": "25 minutes",
     "instructions": [
@@ -55,6 +89,15 @@
   {
     "name": "Vegetable Fried Rice",
     "ingredients": ["rice", "carrot", "onion", "peas", "garlic", "soy sauce"],
+    "ingredient_quantities": [
+      {"name": "rice", "quantity": "1 cup uncooked"},
+      {"name": "carrot", "quantity": "1 medium"},
+      {"name": "onion", "quantity": "1 medium"},
+      {"name": "peas", "quantity": "1/2 cup"},
+      {"name": "garlic", "quantity": "3 cloves"},
+      {"name": "soy sauce", "quantity": "2 tablespoons"}
+    ],
+    "difficulty": "Medium",
     "cuisine": "Chinese",
     "time": "25 minutes",
     "instructions": [
@@ -68,6 +111,14 @@
   {
     "name": "Banana Pancakes",
     "ingredients": ["banana", "egg", "milk", "flour", "butter"],
+    "ingredient_quantities": [
+      {"name": "banana", "quantity": "2 medium"},
+      {"name": "egg", "quantity": "2 large"},
+      {"name": "milk", "quantity": "1/2 cup"},
+      {"name": "flour", "quantity": "1 cup"},
+      {"name": "butter", "quantity": "2 tablespoons"}
+    ],
+    "difficulty": "Easy",
     "cuisine": "International",
     "time": "20 minutes",
     "instructions": [
@@ -81,6 +132,17 @@
   {
     "name": "Chicken Curry",
     "ingredients": ["chicken", "tomato", "onion", "garlic", "ginger", "red chili powder", "turmeric", "oil"],
+    "ingredient_quantities": [
+      {"name": "chicken", "quantity": "500 g"},
+      {"name": "tomato", "quantity": "2 medium"},
+      {"name": "onion", "quantity": "2 medium"},
+      {"name": "garlic", "quantity": "5 cloves"},
+      {"name": "ginger", "quantity": "1 tablespoon grated"},
+      {"name": "red chili powder", "quantity": "1 teaspoon"},
+      {"name": "turmeric", "quantity": "1/2 teaspoon"},
+      {"name": "oil", "quantity": "3 tablespoons"}
+    ],
+    "difficulty": "Medium",
     "cuisine": "Indian",
     "time": "45 minutes",
     "instructions": [
@@ -95,6 +157,16 @@
   {
     "name": "Chicken Stir Fry",
     "ingredients": ["chicken", "bell pepper", "carrot", "onion", "garlic", "soy sauce", "oil"],
+    "ingredient_quantities": [
+      {"name": "chicken", "quantity": "400 g"},
+      {"name": "bell pepper", "quantity": "1 medium"},
+      {"name": "carrot", "quantity": "1 medium"},
+      {"name": "onion", "quantity": "1 medium"},
+      {"name": "garlic", "quantity": "3 cloves"},
+      {"name": "soy sauce", "quantity": "2 tablespoons"},
+      {"name": "oil", "quantity": "2 tablespoons"}
+    ],
+    "difficulty": "Medium",
     "cuisine": "Chinese",
     "time": "30 minutes",
     "instructions": [
@@ -109,6 +181,16 @@
   {
     "name": "Chicken Fajitas",
     "ingredients": ["chicken", "bell pepper", "onion", "lime", "paprika", "tortilla", "oil"],
+    "ingredient_quantities": [
+      {"name": "chicken", "quantity": "400 g"},
+      {"name": "bell pepper", "quantity": "2 medium"},
+      {"name": "onion", "quantity": "1 medium"},
+      {"name": "lime", "quantity": "1"},
+      {"name": "paprika", "quantity": "1 teaspoon"},
+      {"name": "tortilla", "quantity": "4"},
+      {"name": "oil", "quantity": "2 tablespoons"}
+    ],
+    "difficulty": "Medium",
     "cuisine": "Mexican",
     "time": "30 minutes",
     "instructions": [
@@ -122,6 +204,16 @@
   {
     "name": "Chicken Pasta",
     "ingredients": ["chicken", "pasta", "tomato", "garlic", "onion", "olive oil", "cheese"],
+    "ingredient_quantities": [
+      {"name": "chicken", "quantity": "300 g"},
+      {"name": "pasta", "quantity": "200 g"},
+      {"name": "tomato", "quantity": "2 medium"},
+      {"name": "garlic", "quantity": "3 cloves"},
+      {"name": "onion", "quantity": "1 medium"},
+      {"name": "olive oil", "quantity": "2 tablespoons"},
+      {"name": "cheese", "quantity": "1/2 cup grated"}
+    ],
+    "difficulty": "Medium",
     "cuisine": "Italian",
     "time": "35 minutes",
     "instructions": [
@@ -136,6 +228,17 @@
   {
     "name": "Beef Stew",
     "ingredients": ["beef", "potato", "carrot", "onion", "garlic", "tomato", "water", "salt"],
+    "ingredient_quantities": [
+      {"name": "beef", "quantity": "500 g"},
+      {"name": "potato", "quantity": "2 medium"},
+      {"name": "carrot", "quantity": "2 medium"},
+      {"name": "onion", "quantity": "1 medium"},
+      {"name": "garlic", "quantity": "3 cloves"},
+      {"name": "tomato", "quantity": "2 medium"},
+      {"name": "water", "quantity": "4 cups"},
+      {"name": "salt", "quantity": "1 teaspoon"}
+    ],
+    "difficulty": "Medium",
     "cuisine": "European",
     "time": "90 minutes",
     "instructions": [
@@ -149,6 +252,16 @@
   {
     "name": "Beef Tacos",
     "ingredients": ["beef", "tortilla", "tomato", "onion", "lettuce", "cheese", "cumin"],
+    "ingredient_quantities": [
+      {"name": "beef", "quantity": "400 g ground"},
+      {"name": "tortilla", "quantity": "4"},
+      {"name": "tomato", "quantity": "2 medium"},
+      {"name": "onion", "quantity": "1 medium"},
+      {"name": "lettuce", "quantity": "1 cup shredded"},
+      {"name": "cheese", "quantity": "1/2 cup grated"},
+      {"name": "cumin", "quantity": "1 teaspoon"}
+    ],
+    "difficulty": "Medium",
     "cuisine": "Mexican",
     "time": "30 minutes",
     "instructions": [
@@ -162,6 +275,17 @@
   {
     "name": "Lamb Curry",
     "ingredients": ["lamb", "tomato", "onion", "ginger", "garlic", "red chili powder", "turmeric", "oil"],
+    "ingredient_quantities": [
+      {"name": "lamb", "quantity": "500 g"},
+      {"name": "tomato", "quantity": "2 medium"},
+      {"name": "onion", "quantity": "2 medium"},
+      {"name": "ginger", "quantity": "1 tablespoon grated"},
+      {"name": "garlic", "quantity": "5 cloves"},
+      {"name": "red chili powder", "quantity": "1 teaspoon"},
+      {"name": "turmeric", "quantity": "1/2 teaspoon"},
+      {"name": "oil", "quantity": "3 tablespoons"}
+    ],
+    "difficulty": "Hard",
     "cuisine": "Indian",
     "time": "75 minutes",
     "instructions": [
@@ -176,6 +300,16 @@
   {
     "name": "Lamb Kebabs",
     "ingredients": ["lamb", "onion", "garlic", "cumin", "paprika", "salt", "pepper"],
+    "ingredient_quantities": [
+      {"name": "lamb", "quantity": "500 g ground"},
+      {"name": "onion", "quantity": "1 medium"},
+      {"name": "garlic", "quantity": "3 cloves"},
+      {"name": "cumin", "quantity": "1 teaspoon"},
+      {"name": "paprika", "quantity": "1 teaspoon"},
+      {"name": "salt", "quantity": "1 teaspoon"},
+      {"name": "pepper", "quantity": "1/2 teaspoon"}
+    ],
+    "difficulty": "Medium",
     "cuisine": "Middle Eastern",
     "time": "40 minutes",
     "instructions": [
@@ -189,6 +323,17 @@
   {
     "name": "Fish Curry",
     "ingredients": ["fish", "tomato", "onion", "garlic", "ginger", "turmeric", "red chili powder", "oil"],
+    "ingredient_quantities": [
+      {"name": "fish", "quantity": "500 g"},
+      {"name": "tomato", "quantity": "2 medium"},
+      {"name": "onion", "quantity": "1 medium"},
+      {"name": "garlic", "quantity": "4 cloves"},
+      {"name": "ginger", "quantity": "1 tablespoon grated"},
+      {"name": "turmeric", "quantity": "1/2 teaspoon"},
+      {"name": "red chili powder", "quantity": "1/2 teaspoon"},
+      {"name": "oil", "quantity": "2 tablespoons"}
+    ],
+    "difficulty": "Medium",
     "cuisine": "Indian",
     "time": "35 minutes",
     "instructions": [
@@ -202,6 +347,15 @@
   {
     "name": "Lemon Garlic Fish",
     "ingredients": ["fish", "lemon", "garlic", "butter", "salt", "pepper"],
+    "ingredient_quantities": [
+      {"name": "fish", "quantity": "4 fillets (about 500 g)"},
+      {"name": "lemon", "quantity": "1 medium"},
+      {"name": "garlic", "quantity": "3 cloves"},
+      {"name": "butter", "quantity": "3 tablespoons"},
+      {"name": "salt", "quantity": "1/2 teaspoon"},
+      {"name": "pepper", "quantity": "1/4 teaspoon"}
+    ],
+    "difficulty": "Easy",
     "cuisine": "Mediterranean",
     "time": "25 minutes",
     "instructions": [
@@ -215,6 +369,16 @@
   {
     "name": "Vegetable Stir Fry",
     "ingredients": ["broccoli", "carrot", "bell pepper", "onion", "garlic", "soy sauce", "oil"],
+    "ingredient_quantities": [
+      {"name": "broccoli", "quantity": "1 cup florets"},
+      {"name": "carrot", "quantity": "1 medium"},
+      {"name": "bell pepper", "quantity": "1 medium"},
+      {"name": "onion", "quantity": "1 medium"},
+      {"name": "garlic", "quantity": "3 cloves"},
+      {"name": "soy sauce", "quantity": "2 tablespoons"},
+      {"name": "oil", "quantity": "2 tablespoons"}
+    ],
+    "difficulty": "Easy",
     "cuisine": "Asian",
     "time": "20 minutes",
     "instructions": [
@@ -228,6 +392,16 @@
   {
     "name": "Spinach Potato Curry",
     "ingredients": ["spinach", "potato", "onion", "tomato", "garlic", "turmeric", "oil"],
+    "ingredient_quantities": [
+      {"name": "spinach", "quantity": "200 g"},
+      {"name": "potato", "quantity": "2 medium"},
+      {"name": "onion", "quantity": "1 medium"},
+      {"name": "tomato", "quantity": "1 medium"},
+      {"name": "garlic", "quantity": "3 cloves"},
+      {"name": "turmeric", "quantity": "1/2 teaspoon"},
+      {"name": "oil", "quantity": "2 tablespoons"}
+    ],
+    "difficulty": "Easy",
     "cuisine": "Indian",
     "time": "35 minutes",
     "instructions": [
@@ -241,6 +415,16 @@
   {
     "name": "Mushroom Pasta",
     "ingredients": ["mushroom", "pasta", "garlic", "cream", "butter", "cheese", "salt"],
+    "ingredient_quantities": [
+      {"name": "mushroom", "quantity": "200 g"},
+      {"name": "pasta", "quantity": "200 g"},
+      {"name": "garlic", "quantity": "3 cloves"},
+      {"name": "cream", "quantity": "1/2 cup"},
+      {"name": "butter", "quantity": "2 tablespoons"},
+      {"name": "cheese", "quantity": "1/2 cup grated"},
+      {"name": "salt", "quantity": "1/2 teaspoon"}
+    ],
+    "difficulty": "Medium",
     "cuisine": "Italian",
     "time": "30 minutes",
     "instructions": [
@@ -254,6 +438,16 @@
   {
     "name": "Shakshuka",
     "ingredients": ["egg", "tomato", "onion", "bell pepper", "garlic", "paprika", "olive oil"],
+    "ingredient_quantities": [
+      {"name": "egg", "quantity": "4 large"},
+      {"name": "tomato", "quantity": "4 medium"},
+      {"name": "onion", "quantity": "1 medium"},
+      {"name": "bell pepper", "quantity": "1 medium"},
+      {"name": "garlic", "quantity": "3 cloves"},
+      {"name": "paprika", "quantity": "1 teaspoon"},
+      {"name": "olive oil", "quantity": "2 tablespoons"}
+    ],
+    "difficulty": "Medium",
     "cuisine": "Middle Eastern",
     "time": "30 minutes",
     "instructions": [
