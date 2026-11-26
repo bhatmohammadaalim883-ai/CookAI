@@ -40,9 +40,7 @@ app.config["MAX_CONTENT_LENGTH"] = 15 * 1024 * 1024
 database_url = os.getenv("DATABASE_URL", "sqlite:///cookai.db")
 
 if database_url.startswith("postgres://"):
-    database_url = database_url.replace(
-        "postgres://", "postgresql://", 1
-    )
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -95,6 +93,8 @@ MINIMUM_LOCAL_RECIPES = 5
 AI_RECIPE_COUNT = 5
 MAX_TOTAL_RECIPES = 10
 
+VALID_DIFFICULTIES = {"Easy", "Medium", "Hard"}
+
 
 class GeminiTemporaryError(Exception):
     pass
@@ -113,7 +113,6 @@ INGREDIENT_ALIASES = {
     "green chillies": "green chili",
     "green chilies": "green chili",
     "capsicum": "bell pepper",
-    "spring onion": "spring onion",
     "scallion": "spring onion",
     "scallions": "spring onion",
     "aubergine": "eggplant",
@@ -147,14 +146,92 @@ def clean_ingredients(ingredients):
 
     cleaned = set()
 
-    for item in ingredients:
+    if not isinstance(ingredients, list):
+        return []
 
+    for item in ingredients:
         normalized = normalize_ingredient(item)
 
         if normalized:
             cleaned.add(normalized)
 
     return sorted(cleaned)
+
+
+# -----------------------------
+# RECIPE DETAIL VALIDATION
+# -----------------------------
+
+def clean_quantity_details(quantity_details, recipe_ingredients):
+
+    if not isinstance(quantity_details, list):
+        return []
+
+    valid_ingredients = set(recipe_ingredients)
+    cleaned = []
+    seen = set()
+
+    for item in quantity_details:
+
+        if not isinstance(item, dict):
+            continue
+
+        name = normalize_ingredient(item.get("name", ""))
+        quantity = item.get("quantity", "")
+
+        if not name or name not in valid_ingredients:
+            continue
+
+        if not isinstance(quantity, str):
+            continue
+
+        quantity = quantity.strip()
+
+        if not quantity or len(quantity) > 100:
+            continue
+
+        if name in seen:
+            continue
+
+        cleaned.append({
+            "name": name,
+            "quantity": quantity
+        })
+
+        seen.add(name)
+
+    return cleaned
+
+
+def clean_difficulty(value):
+
+    if not isinstance(value, str):
+        return "Not specified"
+
+    value = value.strip().capitalize()
+
+    if value not in VALID_DIFFICULTIES:
+        return "Not specified"
+
+    return value
+
+
+def clean_instructions(instructions):
+
+    if not isinstance(instructions, list):
+        return []
+
+    cleaned = []
+
+    for step in instructions:
+
+        if isinstance(step, str):
+            step = step.strip()
+
+            if step and len(step) <= 1500:
+                cleaned.append(step)
+
+    return cleaned[:30]
 
 
 # -----------------------------
@@ -197,11 +274,7 @@ def signup():
             flash("That username or email is already registered.", "error")
             return redirect(url_for("signup"))
 
-        user = User(
-            username=username,
-            email=email
-        )
-
+        user = User(username=username, email=email)
         user.set_password(password)
 
         db.session.add(user)
@@ -320,9 +393,26 @@ def prepare_recipe(recipe, available, source="database"):
         len(matched) / len(recipe_ingredients) * 100
     )
 
+    quantity_details = clean_quantity_details(
+        recipe.get("ingredient_quantities", []),
+        recipe_ingredients
+    )
+
+    difficulty = clean_difficulty(
+        recipe.get("difficulty", "Not specified")
+    )
+
+    instructions = clean_instructions(
+        recipe.get("instructions", [])
+    )
+
     return {
         **recipe,
+        "name": str(recipe.get("name", "Untitled Recipe")),
         "ingredients": recipe_ingredients,
+        "ingredient_quantities": quantity_details,
+        "difficulty": difficulty,
+        "instructions": instructions,
         "matched_ingredients": matched,
         "missing_ingredients": missing,
         "match_percentage": percentage,
@@ -479,19 +569,25 @@ IMPORTANT RULES:
 3. Do not assume the user owns ingredients that were not provided.
 4. You may include a small number of additional ingredients
    when necessary to make a realistic recipe.
-5. The additional ingredients must be clearly listed so CookAI
-   can identify what the user is missing.
+5. Clearly list additional ingredients so CookAI can identify
+   what the user is missing.
 6. Prefer recipes that can be made with the available ingredients.
 7. Include different cooking styles and cuisines when appropriate.
 8. Do not create duplicate recipes.
 9. Do not invent ingredients that are not real food ingredients.
-10. Include clear, practical cooking instructions.
-11. Include sensible quantities for each ingredient.
-12. Do not recommend an ingredient as available unless it appears
+10. Include clear, practical, numbered cooking instructions.
+11. Include sensible quantities for EVERY ingredient.
+12. Do not mark an ingredient as available unless it appears
     in the user's ingredient list.
 13. Do not include optional ingredients in the required ingredient list.
 14. Give appropriate food-safety instructions for meat, poultry,
     fish and eggs.
+15. Difficulty must be Easy, Medium or Hard.
+16. Difficulty should reflect the actual cooking skill required.
+17. Quantities must be realistic and suitable for the recipe.
+18. Do not put quantities inside the ingredients list.
+19. Include a separate quantity object for each ingredient.
+20. Do not omit ingredients from ingredient_quantities.
 
 Return valid JSON only, using this exact structure:
 
@@ -504,6 +600,21 @@ Return valid JSON only, using this exact structure:
         "onion",
         "oil"
       ],
+      "ingredient_quantities": [
+        {{
+          "name": "potato",
+          "quantity": "2 medium"
+        }},
+        {{
+          "name": "onion",
+          "quantity": "1 medium"
+        }},
+        {{
+          "name": "oil",
+          "quantity": "2 tablespoons"
+        }}
+      ],
+      "difficulty": "Easy",
       "cuisine": "Indian",
       "time": "30 minutes",
       "instructions": [
@@ -515,10 +626,15 @@ Return valid JSON only, using this exact structure:
   ]
 }}
 
-The ingredients field must contain simple ingredient names,
-not quantities or sentences.
+The ingredients field must contain simple ingredient names only.
 
-The instructions field must contain a list of clear cooking steps.
+The ingredient_quantities field must contain objects with
+"name" and "quantity" properties.
+
+The difficulty field must be exactly Easy, Medium or Hard.
+
+The instructions field must contain a list of clear,
+practical cooking steps in the correct order.
 """
 
     try:
@@ -592,40 +708,55 @@ def recommend_recipes(ingredients):
         if not isinstance(recipe, dict):
             continue
 
-        name = recipe.get("name", "").strip()
+        name = recipe.get("name", "")
+
+        if not isinstance(name, str):
+            continue
+
+        name = name.strip()
 
         if not name or name.lower() in existing_names:
             continue
 
         ingredients_list = recipe.get("ingredients", [])
-        instructions = recipe.get("instructions", [])
 
         if not isinstance(ingredients_list, list):
             continue
 
-        if not isinstance(instructions, list):
+        recipe_ingredients = clean_ingredients(ingredients_list)
+
+        if not recipe_ingredients:
             continue
 
-        # Ignore malformed AI results.
-        if not ingredients_list or not instructions:
+        instructions = clean_instructions(
+            recipe.get("instructions", [])
+        )
+
+        if not instructions:
             continue
 
+        # Prepare validated recipe data.
         recipe["name"] = name
-        recipe["ingredients"] = clean_ingredients(ingredients_list)
+        recipe["ingredients"] = recipe_ingredients
+
+        recipe["ingredient_quantities"] = clean_quantity_details(
+            recipe.get("ingredient_quantities", []),
+            recipe_ingredients
+        )
+
+        recipe["difficulty"] = clean_difficulty(
+            recipe.get("difficulty", "Not specified")
+        )
+
         recipe["cuisine"] = str(
             recipe.get("cuisine", "International")
-        )
+        )[:100]
+
         recipe["time"] = str(
             recipe.get("time", "Not specified")
-        )
-        recipe["instructions"] = [
-            str(step).strip()
-            for step in instructions
-            if isinstance(step, str) and step.strip()
-        ]
+        )[:100]
 
-        if not recipe["instructions"]:
-            continue
+        recipe["instructions"] = instructions
 
         prepared = prepare_recipe(
             recipe,
