@@ -2,7 +2,7 @@
 [
   {
     "name": "Aloo Tamatar Curry",
-    "ingredients": ["potato", "tomato", "onion"],
+    "ingredients": ["potato", "tomato", "onion", "oil", "turmeric", "chili powder"],
     "cuisine": "Indian",
     "time": "30 minutes",
     "instructions": [
@@ -16,31 +16,32 @@
   },
   {
     "name": "Vegetable Omelette",
-    "ingredients": ["egg", "onion", "tomato"],
+    "ingredients": ["egg", "onion", "tomato", "salt", "pepper"],
     "cuisine": "Indian",
     "time": "15 minutes",
     "instructions": [
       "Beat the eggs in a bowl.",
       "Chop the onions and tomatoes.",
       "Mix the vegetables with the eggs.",
+      "Season with salt and pepper.",
       "Cook thoroughly in a heated pan."
     ]
   },
   {
     "name": "Potato Sandwich",
-    "ingredients": ["potato", "bread", "onion"],
+    "ingredients": ["potato", "bread", "onion", "butter", "salt"],
     "cuisine": "International",
     "time": "20 minutes",
     "instructions": [
       "Boil and mash the potatoes.",
-      "Mix with chopped onions.",
+      "Mix with chopped onions and salt.",
       "Spread the mixture on bread.",
-      "Toast until golden."
+      "Toast with butter until golden."
     ]
   },
   {
     "name": "Tomato Soup",
-    "ingredients": ["tomato", "onion", "garlic"],
+    "ingredients": ["tomato", "onion", "garlic", "water", "salt", "pepper"],
     "cuisine": "International",
     "time": "25 minutes",
     "instructions": [
@@ -53,28 +54,214 @@
   },
   {
     "name": "Vegetable Fried Rice",
-    "ingredients": ["rice", "carrot", "onion", "peas"],
-    "cuisine": "Asian",
+    "ingredients": ["rice", "carrot", "onion", "peas", "garlic", "soy sauce"],
+    "cuisine": "Chinese",
     "time": "25 minutes",
     "instructions": [
-      "Cook the rice.",
+      "Cook the rice and allow it to cool.",
       "Chop the vegetables.",
-      "Cook the vegetables in a pan.",
-      "Add cooked rice.",
-      "Mix and cook until hot."
+      "Cook garlic and vegetables in a pan.",
+      "Add cooked rice and soy sauce.",
+      "Mix and cook until thoroughly hot."
     ]
   },
   {
     "name": "Banana Pancakes",
-    "ingredients": ["banana", "egg", "milk", "flour"],
+    "ingredients": ["banana", "egg", "milk", "flour", "butter"],
     "cuisine": "International",
     "time": "20 minutes",
     "instructions": [
       "Mash the banana.",
       "Mix with egg, milk and flour.",
       "Prepare a smooth batter.",
-      "Cook small portions in a pan.",
+      "Cook small portions in a buttered pan.",
       "Serve when fully cooked."
+    ]
+  },
+  {
+    "name": "Chicken Curry",
+    "ingredients": ["chicken", "tomato", "onion", "garlic", "ginger", "red chili powder", "turmeric", "oil"],
+    "cuisine": "Indian",
+    "time": "45 minutes",
+    "instructions": [
+      "Wash and prepare the ingredients.",
+      "Heat oil and cook chopped onions.",
+      "Add ginger, garlic and spices.",
+      "Add tomatoes and cook until soft.",
+      "Add chicken and mix well.",
+      "Cook until the chicken is thoroughly cooked."
+    ]
+  },
+  {
+    "name": "Chicken Stir Fry",
+    "ingredients": ["chicken", "bell pepper", "carrot", "onion", "garlic", "soy sauce", "oil"],
+    "cuisine": "Chinese",
+    "time": "30 minutes",
+    "instructions": [
+      "Cut the chicken and vegetables into small pieces.",
+      "Heat oil in a pan.",
+      "Cook the chicken thoroughly.",
+      "Add garlic and vegetables.",
+      "Add soy sauce and stir well.",
+      "Cook until the vegetables are tender."
+    ]
+  },
+  {
+    "name": "Chicken Fajitas",
+    "ingredients": ["chicken", "bell pepper", "onion", "lime", "paprika", "tortilla", "oil"],
+    "cuisine": "Mexican",
+    "time": "30 minutes",
+    "instructions": [
+      "Slice the chicken and vegetables.",
+      "Season the chicken with paprika and lime.",
+      "Cook the chicken thoroughly in a pan.",
+      "Add bell peppers and onions.",
+      "Serve inside warm tortillas."
+    ]
+  },
+  {
+    "name": "Chicken Pasta",
+    "ingredients": ["chicken", "pasta", "tomato", "garlic", "onion", "olive oil", "cheese"],
+    "cuisine": "Italian",
+    "time": "35 minutes",
+    "instructions": [
+      "Cook the pasta according to its package instructions.",
+      "Cook the chicken thoroughly in olive oil.",
+      "Add chopped onion and garlic.",
+      "Add tomatoes and cook into a sauce.",
+      "Mix in the pasta and chicken.",
+      "Top with cheese."
+    ]
+  },
+  {
+    "name": "Beef Stew",
+    "ingredients": ["beef", "potato", "carrot", "onion", "garlic", "tomato", "water", "salt"],
+    "cuisine": "European",
+    "time": "90 minutes",
+    "instructions": [
+      "Cut the beef and vegetables into pieces.",
+      "Cook onions and garlic in a pot.",
+      "Add beef and brown the outside.",
+      "Add vegetables and water.",
+      "Simmer until the beef is tender and thoroughly cooked."
+    ]
+  },
+  {
+    "name": "Beef Tacos",
+    "ingredients": ["beef", "tortilla", "tomato", "onion", "lettuce", "cheese", "cumin"],
+    "cuisine": "Mexican",
+    "time": "30 minutes",
+    "instructions": [
+      "Cook the beef with cumin until thoroughly cooked.",
+      "Chop tomatoes, onions and lettuce.",
+      "Warm the tortillas.",
+      "Fill tortillas with beef and vegetables.",
+      "Add cheese and serve."
+    ]
+  },
+  {
+    "name": "Lamb Curry",
+    "ingredients": ["lamb", "tomato", "onion", "ginger", "garlic", "red chili powder", "turmeric", "oil"],
+    "cuisine": "Indian",
+    "time": "75 minutes",
+    "instructions": [
+      "Prepare the lamb and vegetables.",
+      "Cook onions in heated oil.",
+      "Add ginger, garlic and spices.",
+      "Add tomatoes and cook until soft.",
+      "Add lamb and mix.",
+      "Cook until the lamb is tender and thoroughly cooked."
+    ]
+  },
+  {
+    "name": "Lamb Kebabs",
+    "ingredients": ["lamb", "onion", "garlic", "cumin", "paprika", "salt", "pepper"],
+    "cuisine": "Middle Eastern",
+    "time": "40 minutes",
+    "instructions": [
+      "Prepare the ground lamb.",
+      "Mix with finely chopped onion and garlic.",
+      "Add cumin, paprika, salt and pepper.",
+      "Shape into kebabs.",
+      "Cook thoroughly until safely done."
+    ]
+  },
+  {
+    "name": "Fish Curry",
+    "ingredients": ["fish", "tomato", "onion", "garlic", "ginger", "turmeric", "red chili powder", "oil"],
+    "cuisine": "Indian",
+    "time": "35 minutes",
+    "instructions": [
+      "Clean and prepare the fish.",
+      "Cook onions, ginger and garlic in oil.",
+      "Add tomatoes and spices.",
+      "Add the fish carefully.",
+      "Simmer until the fish is thoroughly cooked."
+    ]
+  },
+  {
+    "name": "Lemon Garlic Fish",
+    "ingredients": ["fish", "lemon", "garlic", "butter", "salt", "pepper"],
+    "cuisine": "Mediterranean",
+    "time": "25 minutes",
+    "instructions": [
+      "Prepare the fish fillets.",
+      "Mix melted butter, garlic and lemon juice.",
+      "Season the fish with salt and pepper.",
+      "Cook the fish with the garlic mixture.",
+      "Make sure the fish is thoroughly cooked before serving."
+    ]
+  },
+  {
+    "name": "Vegetable Stir Fry",
+    "ingredients": ["broccoli", "carrot", "bell pepper", "onion", "garlic", "soy sauce", "oil"],
+    "cuisine": "Asian",
+    "time": "20 minutes",
+    "instructions": [
+      "Wash and chop all vegetables.",
+      "Heat oil in a pan.",
+      "Add garlic and vegetables.",
+      "Add soy sauce.",
+      "Stir and cook until the vegetables are tender."
+    ]
+  },
+  {
+    "name": "Spinach Potato Curry",
+    "ingredients": ["spinach", "potato", "onion", "tomato", "garlic", "turmeric", "oil"],
+    "cuisine": "Indian",
+    "time": "35 minutes",
+    "instructions": [
+      "Wash and chop spinach and potatoes.",
+      "Cook onions and garlic in oil.",
+      "Add tomatoes and turmeric.",
+      "Add potatoes and cook until tender.",
+      "Add spinach and cook until soft."
+    ]
+  },
+  {
+    "name": "Mushroom Pasta",
+    "ingredients": ["mushroom", "pasta", "garlic", "cream", "butter", "cheese", "salt"],
+    "cuisine": "Italian",
+    "time": "30 minutes",
+    "instructions": [
+      "Cook the pasta according to package instructions.",
+      "Slice the mushrooms.",
+      "Cook garlic and mushrooms in butter.",
+      "Add cream and cheese.",
+      "Mix in the pasta and serve."
+    ]
+  },
+  {
+    "name": "Shakshuka",
+    "ingredients": ["egg", "tomato", "onion", "bell pepper", "garlic", "paprika", "olive oil"],
+    "cuisine": "Middle Eastern",
+    "time": "30 minutes",
+    "instructions": [
+      "Chop the onion, pepper and tomatoes.",
+      "Cook onion, garlic and pepper in olive oil.",
+      "Add tomatoes and paprika.",
+      "Simmer until the sauce thickens.",
+      "Add eggs and cook until they are fully set."
     ]
   }
 ]
