@@ -91,6 +91,10 @@ client = genai.Client(api_key=API_KEY) if API_KEY else None
 
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 
+MINIMUM_LOCAL_RECIPES = 5
+AI_RECIPE_COUNT = 5
+MAX_TOTAL_RECIPES = 10
+
 
 class GeminiTemporaryError(Exception):
     pass
@@ -108,7 +112,6 @@ INGREDIENT_ALIASES = {
     "green chilli": "green chili",
     "green chillies": "green chili",
     "green chilies": "green chili",
-    "bell pepper": "bell pepper",
     "capsicum": "bell pepper",
     "spring onion": "spring onion",
     "scallion": "spring onion",
@@ -140,26 +143,18 @@ def normalize_ingredient(ingredient):
     return INGREDIENT_ALIASES.get(ingredient, ingredient)
 
 
-# Main protein categories.
-# A recipe requiring a different protein will not be recommended.
+def clean_ingredients(ingredients):
 
-PROTEIN_GROUPS = {
-    "chicken": {"chicken"},
-    "beef": {"beef"},
-    "lamb": {"lamb"},
-    "fish": {"fish"},
-    "egg": {"egg"},
-    "pork": {"pork"},
-    "shrimp": {"shrimp"},
-    "turkey": {"turkey"},
-    "duck": {"duck"}
-}
+    cleaned = set()
 
-PROTEIN_INGREDIENTS = set().union(*PROTEIN_GROUPS.values())
+    for item in ingredients:
 
+        normalized = normalize_ingredient(item)
 
-def get_proteins(ingredients):
-    return set(ingredients) & PROTEIN_INGREDIENTS
+        if normalized:
+            cleaned.add(normalized)
+
+    return sorted(cleaned)
 
 
 # -----------------------------
@@ -206,6 +201,7 @@ def signup():
             username=username,
             email=email
         )
+
         user.set_password(password)
 
         db.session.add(user)
@@ -285,6 +281,7 @@ def home():
 def load_recipes():
 
     try:
+
         with open("recipes.json", "r", encoding="utf-8") as file:
             recipes = json.load(file)
 
@@ -295,92 +292,67 @@ def load_recipes():
         return recipes
 
     except (FileNotFoundError, json.JSONDecodeError):
+
         app.logger.exception("Could not load recipes.json")
         return []
 
 
 # -----------------------------
-# SMART RECIPE RECOMMENDATION
+# RECIPE MATCHING
 # -----------------------------
 
-def recommend_recipes(ingredients):
+def prepare_recipe(recipe, available, source="database"):
 
-    recipes = load_recipes()
+    recipe_ingredients = clean_ingredients(
+        recipe.get("ingredients", [])
+    )
 
-    available = {
-        normalize_ingredient(item)
-        for item in ingredients
-        if normalize_ingredient(item)
+    if not recipe_ingredients:
+        return None
+
+    matched = sorted(set(recipe_ingredients) & set(available))
+    missing = sorted(set(recipe_ingredients) - set(available))
+
+    if not matched:
+        return None
+
+    percentage = round(
+        len(matched) / len(recipe_ingredients) * 100
+    )
+
+    return {
+        **recipe,
+        "ingredients": recipe_ingredients,
+        "matched_ingredients": matched,
+        "missing_ingredients": missing,
+        "match_percentage": percentage,
+        "matched_count": len(matched),
+        "source": source
     }
 
-    detected_proteins = get_proteins(available)
+
+def recommend_local_recipes(ingredients):
+
+    available = set(clean_ingredients(ingredients))
+    recipes = load_recipes()
 
     recommendations = []
 
     for recipe in recipes:
 
-        recipe_ingredients = {
-            normalize_ingredient(item)
-            for item in recipe.get("ingredients", [])
-            if normalize_ingredient(item)
-        }
-
-        if not recipe_ingredients:
+        if not isinstance(recipe, dict):
             continue
 
-        recipe_proteins = get_proteins(recipe_ingredients)
+        prepared = prepare_recipe(recipe, available)
 
-        # If the user has identified a protein, only recommend
-        # recipes containing that same protein.
-        if detected_proteins:
-
-            if not recipe_proteins:
-                continue
-
-            if not recipe_proteins.issubset(detected_proteins):
-                continue
-
-        # Do not recommend meat recipes when no matching
-        # meat or protein has been identified.
-        elif recipe_proteins:
-            continue
-
-        matched = sorted(recipe_ingredients & available)
-        missing = sorted(recipe_ingredients - available)
-
-        if not matched:
-            continue
-
-        # For protein recipes, the protein itself is essential.
-        if recipe_proteins and not (recipe_proteins & available):
-            continue
-
-        # Prevent recommendations based on just one common
-        # ingredient such as tomato or onion.
-        if len(matched) < 2 and not recipe_proteins:
-            continue
-
-        percentage = round(
-            len(matched) / len(recipe_ingredients) * 100
-        )
-
-        # Give priority to recipes matching their main protein.
-        primary_match = bool(recipe_proteins & available)
-
-        recommendations.append({
-            **recipe,
-            "matched_ingredients": matched,
-            "missing_ingredients": missing,
-            "match_percentage": percentage,
-            "matched_count": len(matched),
-            "primary_match": primary_match
-        })
+        if prepared:
+            recommendations.append(prepared)
 
     recommendations.sort(
         key=lambda recipe: (
-            recipe["primary_match"],
             recipe["match_percentage"],
-            recipe["matched_count"]
+            recipe["matched_count"],
+            -len(recipe["missing_ingredients"])
         ),
         reverse=True
     )
@@ -405,14 +377,285 @@ def get_error_status(error):
     error_text = str(error)
 
     for code in (429, 500, 502, 503, 504):
+
         if str(code) in error_text:
             return code
 
     return None
 
 
+def call_gemini(prompt, image_parts=None):
+
+    if client is None:
+        raise RuntimeError("Gemini API key is not configured.")
+
+    contents = [prompt]
+
+    if image_parts:
+        contents.extend(image_parts)
+
+    for attempt in range(3):
+
+        try:
+
+            response = client.models.generate_content(
+                model=MODEL_NAME,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json"
+                )
+            )
+
+            if not response.text:
+                raise ValueError("Gemini returned an empty response.")
+
+            return response.text
+
+        except ValueError:
+            raise
+
+        except Exception as error:
+
+            status = get_error_status(error)
+
+            if status not in {429, 500, 502, 503, 504}:
+                raise
+
+            if attempt == 2:
+
+                app.logger.error(
+                    "Gemini unavailable after 3 attempts: %s",
+                    error
+                )
+
+                raise GeminiTemporaryError(
+                    "Gemini AI is temporarily busy. Please try again later."
+                ) from error
+
+            wait_time = 2 ** (attempt + 1)
+
+            app.logger.warning(
+                "Gemini error %s. Retrying in %s seconds.",
+                status,
+                wait_time
+            )
+
+            time.sleep(wait_time)
+
+    raise GeminiTemporaryError(
+        "Gemini AI is temporarily unavailable."
+    )
+
+
 # -----------------------------
-# INGREDIENT RECOGNITION
+# AI RECIPE GENERATION
+# -----------------------------
+
+def generate_ai_recipes(ingredients):
+
+    if client is None:
+        app.logger.warning("AI recipe generation skipped: API key missing.")
+        return []
+
+    available = clean_ingredients(ingredients)
+
+    if not available:
+        return []
+
+    prompt = f"""
+You are CookAI, an expert cooking assistant.
+
+The user has these available ingredients:
+
+{json.dumps(available)}
+
+Generate exactly {AI_RECIPE_COUNT} different practical recipes.
+
+IMPORTANT RULES:
+
+1. Use the user's available ingredients as the main ingredients.
+2. Recipes can include vegetables, chicken, meat, fish, eggs,
+   rice, pulses, grains, fruits, spices and other foods.
+3. Do not assume the user owns ingredients that were not provided.
+4. You may include a small number of additional ingredients
+   when necessary to make a realistic recipe.
+5. The additional ingredients must be clearly listed so CookAI
+   can identify what the user is missing.
+6. Prefer recipes that can be made with the available ingredients.
+7. Include different cooking styles and cuisines when appropriate.
+8. Do not create duplicate recipes.
+9. Do not invent ingredients that are not real food ingredients.
+10. Include clear, practical cooking instructions.
+11. Include sensible quantities for each ingredient.
+12. Do not recommend an ingredient as available unless it appears
+    in the user's ingredient list.
+13. Do not include optional ingredients in the required ingredient list.
+14. Give appropriate food-safety instructions for meat, poultry,
+    fish and eggs.
+
+Return valid JSON only, using this exact structure:
+
+{{
+  "recipes": [
+    {{
+      "name": "Recipe name",
+      "ingredients": [
+        "potato",
+        "onion",
+        "oil"
+      ],
+      "cuisine": "Indian",
+      "time": "30 minutes",
+      "instructions": [
+        "First cooking step.",
+        "Second cooking step.",
+        "Final cooking step."
+      ]
+    }}
+  ]
+}}
+
+The ingredients field must contain simple ingredient names,
+not quantities or sentences.
+
+The instructions field must contain a list of clear cooking steps.
+"""
+
+    try:
+
+        response_text = call_gemini(prompt)
+        result = json.loads(response_text)
+
+        if isinstance(result, list):
+            generated = result
+
+        elif isinstance(result, dict):
+            generated = result.get("recipes", [])
+
+        else:
+            return []
+
+        if not isinstance(generated, list):
+            return []
+
+        return generated[:AI_RECIPE_COUNT]
+
+    except GeminiTemporaryError:
+        raise
+
+    except Exception:
+
+        app.logger.exception("AI recipe generation failed")
+        return []
+
+
+# -----------------------------
+# HYBRID RECIPE ENGINE
+# -----------------------------
+
+def recommend_recipes(ingredients):
+
+    available = clean_ingredients(ingredients)
+
+    if not available:
+        return []
+
+    # First search the saved recipe database.
+    local_recipes = recommend_local_recipes(available)
+
+    # Generate additional recipes only when the database
+    # does not provide enough recommendations.
+    if len(local_recipes) >= MINIMUM_LOCAL_RECIPES:
+        return local_recipes[:MAX_TOTAL_RECIPES]
+
+    try:
+
+        ai_recipes = generate_ai_recipes(available)
+
+    except GeminiTemporaryError:
+
+        app.logger.warning(
+            "AI recipe fallback unavailable. Returning saved recipes."
+        )
+
+        return local_recipes[:MAX_TOTAL_RECIPES]
+
+    combined = list(local_recipes)
+
+    existing_names = {
+        recipe.get("name", "").strip().lower()
+        for recipe in local_recipes
+    }
+
+    for recipe in ai_recipes:
+
+        if not isinstance(recipe, dict):
+            continue
+
+        name = recipe.get("name", "").strip()
+
+        if not name or name.lower() in existing_names:
+            continue
+
+        ingredients_list = recipe.get("ingredients", [])
+        instructions = recipe.get("instructions", [])
+
+        if not isinstance(ingredients_list, list):
+            continue
+
+        if not isinstance(instructions, list):
+            continue
+
+        # Ignore malformed AI results.
+        if not ingredients_list or not instructions:
+            continue
+
+        recipe["name"] = name
+        recipe["ingredients"] = clean_ingredients(ingredients_list)
+        recipe["cuisine"] = str(
+            recipe.get("cuisine", "International")
+        )
+        recipe["time"] = str(
+            recipe.get("time", "Not specified")
+        )
+        recipe["instructions"] = [
+            str(step).strip()
+            for step in instructions
+            if isinstance(step, str) and step.strip()
+        ]
+
+        if not recipe["instructions"]:
+            continue
+
+        prepared = prepare_recipe(
+            recipe,
+            set(available),
+            source="AI generated"
+        )
+
+        if not prepared:
+            continue
+
+        combined.append(prepared)
+        existing_names.add(name.lower())
+
+        if len(combined) >= MAX_TOTAL_RECIPES:
+            break
+
+    combined.sort(
+        key=lambda recipe: (
+            recipe["match_percentage"],
+            recipe["matched_count"],
+            -len(recipe["missing_ingredients"])
+        ),
+        reverse=True
+    )
+
+    return combined[:MAX_TOTAL_RECIPES]
+
+
+# -----------------------------
+# IMAGE INGREDIENT RECOGNITION
 # -----------------------------
 
 def detect_ingredients(image_file):
@@ -444,92 +687,46 @@ def detect_ingredients(image_file):
         raise ValueError("Please upload a valid image.")
 
     prompt = """
-    Identify the visible food ingredients in this photograph.
+Identify the visible food ingredients in this photograph.
 
-    Only identify ingredients that are clearly visible.
-    Do not guess hidden ingredients or complete dishes.
+Only identify ingredients that are clearly visible.
+Do not guess hidden ingredients or complete dishes.
 
-    Identify the actual ingredient as specifically as possible.
-    For example, distinguish chicken from other meats.
+Identify actual ingredients as specifically as possible.
+Distinguish chicken from other meats.
 
-    Use simple English ingredient names.
-    Keep spices separate from vegetables and proteins.
+Use simple English ingredient names.
+Keep spices separate from vegetables and proteins.
 
-    Return valid JSON only:
-    {
-      "ingredients": ["chicken", "tomato", "red chili powder"]
-    }
-    """
+Return valid JSON only:
 
-    for attempt in range(3):
+{
+  "ingredients": ["chicken", "tomato", "red chili powder"]
+}
+"""
 
-        try:
-
-            response = client.models.generate_content(
-                model=MODEL_NAME,
-                contents=[
-                    prompt,
-                    types.Part.from_bytes(
-                        data=processed_image,
-                        mime_type="image/jpeg"
-                    )
-                ],
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json"
-                )
-            )
-
-            if not response.text:
-                raise ValueError("The AI returned an empty response.")
-
-            result = json.loads(response.text)
-            ingredients = result.get("ingredients", [])
-
-            if not isinstance(ingredients, list):
-                raise ValueError("Invalid AI response.")
-
-            return sorted({
-                normalize_ingredient(item)
-                for item in ingredients
-                if isinstance(item, str) and item.strip()
-            } - {""})
-
-        except ValueError:
-            raise
-
-        except Exception as error:
-
-            status = get_error_status(error)
-            temporary_errors = {429, 500, 502, 503, 504}
-
-            if status not in temporary_errors:
-                raise
-
-            if attempt == 2:
-
-                app.logger.error(
-                    "Gemini remained unavailable after 3 attempts: %s",
-                    error
-                )
-
-                raise GeminiTemporaryError(
-                    "Gemini AI is temporarily busy. Please try again later."
-                ) from error
-
-            wait_time = 2 ** (attempt + 1)
-
-            app.logger.warning(
-                "Gemini temporary error %s. Retrying in %s seconds. Attempt %s/3.",
-                status,
-                wait_time,
-                attempt + 1
-            )
-
-            time.sleep(wait_time)
-
-    raise GeminiTemporaryError(
-        "Gemini AI is temporarily unavailable. Please try again later."
+    image_part = types.Part.from_bytes(
+        data=processed_image,
+        mime_type="image/jpeg"
     )
+
+    response_text = call_gemini(
+        prompt,
+        image_parts=[image_part]
+    )
+
+    try:
+
+        result = json.loads(response_text)
+        ingredients = result.get("ingredients", [])
+
+        if not isinstance(ingredients, list):
+            raise ValueError("Invalid AI response.")
+
+        return clean_ingredients(ingredients)
+
+    except (json.JSONDecodeError, AttributeError, TypeError):
+        raise ValueError("The AI returned an invalid ingredient list.")
 
 
 # -----------------------------
@@ -541,6 +738,7 @@ def detect_ingredients(image_file):
 def scan():
 
     if "images" not in request.files:
+
         return jsonify({
             "success": False,
             "error": "Please upload ingredient photographs."
@@ -549,6 +747,7 @@ def scan():
     files = request.files.getlist("images")
 
     if not files or len(files) > 5:
+
         return jsonify({
             "success": False,
             "error": "Upload between 1 and 5 images."
@@ -566,6 +765,7 @@ def scan():
             extension = image_file.filename.rsplit(".", 1)[-1].lower()
 
             if extension not in ALLOWED_EXTENSIONS:
+
                 return jsonify({
                     "success": False,
                     "error": "Use JPG, JPEG, PNG or WEBP images."
@@ -574,25 +774,17 @@ def scan():
             detected.update(detect_ingredients(image_file))
 
         if not detected:
+
             return jsonify({
                 "success": False,
                 "error": "No ingredients were identified."
             }), 422
 
-        ingredients = sorted(detected)
-        recipes = recommend_recipes(ingredients)
-
-        message = (
-            "Ingredients identified successfully!"
-            if recipes
-            else "Ingredients identified, but no suitable recipes were found."
-        )
-
         return jsonify({
             "success": True,
-            "ingredients": ingredients,
-            "recipes": recipes,
-            "message": message
+            "ingredients": sorted(detected),
+            "recipes": [],
+            "message": "Ingredients identified successfully!"
         })
 
     except GeminiTemporaryError as error:
@@ -631,34 +823,70 @@ def get_recipes():
     ingredients = data.get("ingredients", [])
 
     if not isinstance(ingredients, list):
+
         return jsonify({
             "success": False,
             "error": "Invalid ingredient list."
         }), 400
 
     if len(ingredients) > 50:
+
         return jsonify({
             "success": False,
             "error": "Too many ingredients."
         }), 400
 
-    clean_ingredients = [
-        normalize_ingredient(item)
+    if any(
+        not isinstance(item, str) or len(item) > 60
         for item in ingredients
-        if isinstance(item, str) and item.strip()
-    ]
+    ):
 
-    recipes = recommend_recipes(clean_ingredients)
+        return jsonify({
+            "success": False,
+            "error": "One or more ingredients are invalid."
+        }), 400
 
-    return jsonify({
-        "success": True,
-        "recipes": recipes,
-        "message": (
-            "Recipes found successfully!"
-            if recipes
-            else "No suitable recipes found. Try adding different ingredients."
-        )
-    })
+    clean_list = clean_ingredients(ingredients)
+
+    if not clean_list:
+
+        return jsonify({
+            "success": False,
+            "error": "Please provide at least one ingredient."
+        }), 400
+
+    try:
+
+        recipes = recommend_recipes(clean_list)
+
+        return jsonify({
+            "success": True,
+            "recipes": recipes,
+            "message": (
+                "Recipes found successfully!"
+                if recipes
+                else "No recipes could be generated. Please try again."
+            )
+        })
+
+    except GeminiTemporaryError:
+
+        app.logger.exception("Gemini recipe generation unavailable")
+
+        return jsonify({
+            "success": True,
+            "recipes": recommend_local_recipes(clean_list),
+            "message": "Showing saved recipes. AI generation is temporarily unavailable."
+        })
+
+    except Exception:
+
+        app.logger.exception("Recipe recommendation failed")
+
+        return jsonify({
+            "success": False,
+            "error": "Could not retrieve recipes. Please try again."
+        }), 500
 
 
 # -----------------------------
