@@ -94,9 +94,9 @@
                 </h1>
 
                 <p>
-                    Take a photo of the ingredients in your kitchen.
-                    CookAI identifies them with AI and helps you discover
-                    recipes you can make.
+                    Upload a photo of your ingredients or simply type
+                    what you have. CookAI helps you discover recipes
+                    you can make.
                 </p>
 
                 <div class="hero-actions">
@@ -123,7 +123,7 @@
 
                 <div class="hero-note">
                     <span>✦</span>
-                    Scan ingredients. Discover recipes. Enjoy cooking.
+                    Scan ingredients. Type ingredients. Discover recipes.
                 </div>
 
             </div>
@@ -181,18 +181,18 @@
                     <div class="step-icon">📸</div>
                     <h3>Upload a Photo</h3>
                     <p>
-                        Take a picture of your available ingredients
-                        and upload it to CookAI.
+                        Upload photographs of your available ingredients,
+                        or choose to type them manually.
                     </p>
                 </article>
 
                 <article class="step-card">
                     <div class="step-number">02</div>
                     <div class="step-icon">🤖</div>
-                    <h3>AI Identifies</h3>
+                    <h3>Identify Ingredients</h3>
                     <p>
-                        Our AI analyses your photograph and
-                        identifies the ingredients.
+                        CookAI uses AI to identify ingredients in your
+                        photographs and combines them with your typed list.
                     </p>
                 </article>
 
@@ -214,23 +214,58 @@
 
             {% if current_user.is_authenticated %}
 
-                <!-- LOGGED-IN SCANNER -->
-
                 <div class="section-heading">
                     <span class="section-label">LET'S GET COOKING</span>
                     <h2>What's in Your Kitchen?</h2>
                     <p>
-                        Upload photographs of your ingredients and let
-                        CookAI do the discovery.
+                        Upload ingredient photographs, type your ingredients,
+                        or use both methods together.
                     </p>
                 </div>
 
                 <div class="scanner-panel">
 
+                    <!-- MANUAL INGREDIENT INPUT -->
                     <div class="scanner-heading">
                         <div>
-                            <span class="scanner-label">STEP 1</span>
-                            <h3>Upload Your Ingredients</h3>
+                            <span class="scanner-label">OPTION 1</span>
+                            <h3>Type Your Ingredients</h3>
+                            <p>
+                                Enter ingredients separated by commas.
+                                You don't need to upload a photo.
+                            </p>
+                        </div>
+
+                        <span class="scanner-icon">✍️</span>
+                    </div>
+
+                    <div class="manual-ingredient-area manual-main-area">
+
+                        <label for="manualIngredientInput">
+                            Your available ingredients
+                        </label>
+
+                        <textarea
+                            id="manualIngredientInput"
+                            placeholder="Example: Chicken, tomato, onion, potato, red chili powder..."
+                            maxlength="1000"
+                            rows="4"></textarea>
+
+                        <small class="upload-hint">
+                            Separate ingredients with commas.
+                        </small>
+
+                    </div>
+
+                    <div class="input-divider">
+                        <span>OR</span>
+                    </div>
+
+                    <!-- PHOTO UPLOAD -->
+                    <div class="scanner-heading">
+                        <div>
+                            <span class="scanner-label">OPTION 2</span>
+                            <h3>Upload Ingredient Photos</h3>
                             <p>Select up to 5 ingredient photographs.</p>
                         </div>
 
@@ -267,12 +302,13 @@
                          aria-live="polite">
                     </div>
 
+                    <!-- IDENTIFY PHOTOS -->
                     <div class="scanner-actions">
                         <button type="button"
                                 class="primary-button scan-button"
                                 id="scanButton">
                             <span>✦</span>
-                            Identify Ingredients with AI
+                            Identify Uploaded Photos
                         </button>
                     </div>
 
@@ -297,11 +333,11 @@
                         <div class="results-divider"></div>
 
                         <div class="results-heading">
-                            <span class="section-label">STEP 2</span>
-                            <h3>Your Detected Ingredients</h3>
+                            <span class="section-label">YOUR INGREDIENTS</span>
+                            <h3>Review Your Ingredients</h3>
                             <p>
-                                Check the ingredients below. Add or remove
-                                items before finding recipes.
+                                Check the detected ingredients and add
+                                or remove items before discovering recipes.
                             </p>
                         </div>
 
@@ -313,7 +349,7 @@
                         <div class="manual-ingredient-area">
 
                             <label for="manualIngredient">
-                                Missing an ingredient?
+                                Add another ingredient
                             </label>
 
                             <div class="manual-input-row">
@@ -344,7 +380,7 @@
                         <div class="recipe-results">
 
                             <div class="results-heading">
-                                <span class="section-label">STEP 3</span>
+                                <span class="section-label">RECIPES</span>
                                 <h3>Recipes For You</h3>
                                 <p>
                                     Discover dishes you can make with
@@ -359,6 +395,15 @@
 
                         </div>
 
+                    </div>
+
+                    <!-- MANUAL-ONLY RECIPE BUTTON -->
+                    <div class="manual-find-area">
+                        <button type="button"
+                                class="primary-button find-button"
+                                id="manualFindRecipesButton">
+                            Discover Recipes From My Ingredients <span>→</span>
+                        </button>
                     </div>
 
                 </div>
