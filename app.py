@@ -101,6 +101,44 @@ class GeminiTemporaryError(Exception):
 
 
 # -----------------------------
+# BASIC PANTRY STAPLES
+# -----------------------------
+
+# These ingredients are allowed even when the user
+# does not enter them manually.
+
+PANTRY_STAPLES = {
+    "salt",
+    "black pepper",
+    "white pepper",
+    "oil",
+    "vegetable oil",
+    "cooking oil",
+    "olive oil",
+    "mustard oil",
+    "sunflower oil",
+    "sesame oil",
+    "water",
+    "sugar",
+    "vinegar",
+    "soy sauce",
+    "chili powder",
+    "turmeric",
+    "cumin",
+    "cumin powder",
+    "coriander powder",
+    "garam masala",
+    "paprika",
+    "dried oregano",
+    "dried basil",
+    "bay leaf",
+    "cinnamon",
+    "cloves",
+    "cardamom"
+}
+
+
+# -----------------------------
 # INGREDIENT NORMALIZATION
 # -----------------------------
 
@@ -127,7 +165,22 @@ INGREDIENT_ALIASES = {
     "prawn": "shrimp",
     "chicken meat": "chicken",
     "fish fillet": "fish",
-    "fish fillets": "fish"
+    "fish fillets": "fish",
+
+    "eggs": "egg",
+    "potatoes": "potato",
+    "tomatoes": "tomato",
+    "onions": "onion",
+    "carrots": "carrot",
+    "apples": "apple",
+    "bananas": "banana",
+    "mushrooms": "mushroom",
+    "peas": "pea",
+    "lentils": "lentil",
+    "beans": "bean",
+    "chilies": "chili",
+    "chillies": "chili",
+    "garlic cloves": "garlic"
 }
 
 
@@ -156,6 +209,10 @@ def clean_ingredients(ingredients):
             cleaned.add(normalized)
 
     return sorted(cleaned)
+
+
+def is_pantry_staple(ingredient):
+    return normalize_ingredient(ingredient) in PANTRY_STAPLES
 
 
 # -----------------------------
@@ -371,7 +428,7 @@ def load_recipes():
 
 
 # -----------------------------
-# RECIPE MATCHING
+# STRICT RECIPE MATCHING
 # -----------------------------
 
 def prepare_recipe(recipe, available, source="database"):
@@ -383,15 +440,32 @@ def prepare_recipe(recipe, available, source="database"):
     if not recipe_ingredients:
         return None
 
-    matched = sorted(set(recipe_ingredients) & set(available))
-    missing = sorted(set(recipe_ingredients) - set(available))
+    available = set(clean_ingredients(list(available)))
+    allowed_ingredients = available | PANTRY_STAPLES
 
-    if not matched:
+    # Separate ingredients supplied by the user
+    # from ingredients allowed as pantry staples.
+    user_matched = sorted(
+        set(recipe_ingredients) & available
+    )
+
+    pantry_used = sorted(
+        set(recipe_ingredients) & PANTRY_STAPLES
+    )
+
+    # Reject the recipe if ANY required ingredient
+    # is neither supplied by the user nor a pantry staple.
+    unavailable = sorted(
+        set(recipe_ingredients) - allowed_ingredients
+    )
+
+    if unavailable:
         return None
 
-    percentage = round(
-        len(matched) / len(recipe_ingredients) * 100
-    )
+    # A recipe must use at least one ingredient
+    # that the user actually supplied.
+    if not user_matched:
+        return None
 
     quantity_details = clean_quantity_details(
         recipe.get("ingredient_quantities", []),
@@ -406,6 +480,10 @@ def prepare_recipe(recipe, available, source="database"):
         recipe.get("instructions", [])
     )
 
+    # Do not show recipes without usable instructions.
+    if not instructions:
+        return None
+
     return {
         **recipe,
         "name": str(recipe.get("name", "Untitled Recipe")),
@@ -413,12 +491,28 @@ def prepare_recipe(recipe, available, source="database"):
         "ingredient_quantities": quantity_details,
         "difficulty": difficulty,
         "instructions": instructions,
-        "matched_ingredients": matched,
-        "missing_ingredients": missing,
-        "match_percentage": percentage,
-        "matched_count": len(matched),
+        "matched_ingredients": sorted(
+            set(user_matched) | set(pantry_used)
+        ),
+        "user_matched_ingredients": user_matched,
+        "pantry_ingredients": pantry_used,
+        "missing_ingredients": [],
+        "match_percentage": 100,
+        "matched_count": len(user_matched),
         "source": source
     }
+
+
+def recipe_sort_key(recipe):
+
+    # Prefer recipes using more of the user's ingredients.
+    # When tied, prefer recipes requiring fewer pantry staples.
+
+    return (
+        recipe["matched_count"],
+        -len(recipe.get("pantry_ingredients", [])),
+        -len(recipe["ingredients"])
+    )
 
 
 def recommend_local_recipes(ingredients):
@@ -433,17 +527,17 @@ def recommend_local_recipes(ingredients):
         if not isinstance(recipe, dict):
             continue
 
-        prepared = prepare_recipe(recipe, available)
+        prepared = prepare_recipe(
+            recipe,
+            available,
+            source="database"
+        )
 
         if prepared:
             recommendations.append(prepared)
 
     recommendations.sort(
-        key=lambda recipe: (
-            recipe["match_percentage"],
-            recipe["matched_count"],
-            -len(recipe["missing_ingredients"])
-        ),
+        key=recipe_sort_key,
         reverse=True
     )
 
@@ -555,41 +649,46 @@ def generate_ai_recipes(ingredients):
     prompt = f"""
 You are CookAI, an expert cooking assistant.
 
-The user has these available ingredients:
+The user's actual available ingredients are:
 
 {json.dumps(available)}
 
-Generate exactly {AI_RECIPE_COUNT} different practical recipes.
+These basic pantry staples may also be used without being
+listed by the user:
 
-IMPORTANT RULES:
+{json.dumps(sorted(PANTRY_STAPLES))}
 
-1. Use the user's available ingredients as the main ingredients.
-2. Recipes can include vegetables, chicken, meat, fish, eggs,
-   rice, pulses, grains, fruits, spices and other foods.
-3. Do not assume the user owns ingredients that were not provided.
-4. You may include a small number of additional ingredients
-   when necessary to make a realistic recipe.
-5. Clearly list additional ingredients so CookAI can identify
-   what the user is missing.
-6. Prefer recipes that can be made with the available ingredients.
-7. Include different cooking styles and cuisines when appropriate.
-8. Do not create duplicate recipes.
-9. Do not invent ingredients that are not real food ingredients.
-10. Include clear, practical, numbered cooking instructions.
-11. Include sensible quantities for EVERY ingredient.
-12. Do not mark an ingredient as available unless it appears
-    in the user's ingredient list.
-13. Do not include optional ingredients in the required ingredient list.
-14. Give appropriate food-safety instructions for meat, poultry,
-    fish and eggs.
-15. Difficulty must be Easy, Medium or Hard.
-16. Difficulty should reflect the actual cooking skill required.
-17. Quantities must be realistic and suitable for the recipe.
-18. Do not put quantities inside the ingredients list.
-19. Include a separate quantity object for each ingredient.
-20. Do not omit ingredients from ingredient_quantities.
+Generate exactly {AI_RECIPE_COUNT} different practical recipes
+if enough valid recipes are possible.
 
-Return valid JSON only, using this exact structure:
+STRICT INGREDIENT RULES:
+
+1. Every recipe MUST use at least one ingredient from the
+   user's actual available ingredient list.
+2. Every required ingredient MUST either appear in the user's
+   available ingredient list or in the approved pantry staples.
+3. NEVER include any other unavailable ingredient.
+4. Do not assume the user has ingredients outside these lists.
+5. Do not add optional ingredients to the required ingredients list.
+6. Do not suggest a recipe that needs an unavailable main ingredient.
+7. Do not treat a similar ingredient as an exact substitute.
+8. Do not invent ingredients.
+9. Do not create duplicate recipes.
+10. If fewer than five valid recipes are possible, return only
+    the valid recipes. Never create invalid recipes just to reach five.
+
+RECIPE DETAIL RULES:
+
+1. Include sensible quantities for EVERY required ingredient.
+2. Do not put quantities inside the ingredients list.
+3. Include a separate quantity object for every ingredient.
+4. Include clear, practical cooking instructions in the correct order.
+5. Include appropriate food-safety instructions for meat, poultry,
+   fish and eggs.
+6. Difficulty must be Easy, Medium or Hard.
+7. Include cuisine and realistic cooking time.
+
+Return valid JSON only, using this structure:
 
 {{
   "recipes": [
@@ -666,7 +765,7 @@ practical cooking steps in the correct order.
 
 
 # -----------------------------
-# HYBRID RECIPE ENGINE
+# HYBRID STRICT RECIPE ENGINE
 # -----------------------------
 
 def recommend_recipes(ingredients):
@@ -679,8 +778,8 @@ def recommend_recipes(ingredients):
     # First search the saved recipe database.
     local_recipes = recommend_local_recipes(available)
 
-    # Generate additional recipes only when the database
-    # does not provide enough recommendations.
+    # If enough STRICTLY valid recipes exist,
+    # return them without spending an AI request.
     if len(local_recipes) >= MINIMUM_LOCAL_RECIPES:
         return local_recipes[:MAX_TOTAL_RECIPES]
 
@@ -691,7 +790,8 @@ def recommend_recipes(ingredients):
     except GeminiTemporaryError:
 
         app.logger.warning(
-            "AI recipe fallback unavailable. Returning saved recipes."
+            "AI recipe generation unavailable. "
+            "Returning strictly validated saved recipes."
         )
 
         return local_recipes[:MAX_TOTAL_RECIPES]
@@ -735,7 +835,6 @@ def recommend_recipes(ingredients):
         if not instructions:
             continue
 
-        # Prepare validated recipe data.
         recipe["name"] = name
         recipe["ingredients"] = recipe_ingredients
 
@@ -758,12 +857,14 @@ def recommend_recipes(ingredients):
 
         recipe["instructions"] = instructions
 
+        # The same strict validation is applied to AI recipes.
         prepared = prepare_recipe(
             recipe,
             set(available),
             source="AI generated"
         )
 
+        # Invalid AI recipes are discarded.
         if not prepared:
             continue
 
@@ -774,11 +875,7 @@ def recommend_recipes(ingredients):
             break
 
     combined.sort(
-        key=lambda recipe: (
-            recipe["match_percentage"],
-            recipe["matched_count"],
-            -len(recipe["missing_ingredients"])
-        ),
+        key=recipe_sort_key,
         reverse=True
     )
 
@@ -994,9 +1091,10 @@ def get_recipes():
             "success": True,
             "recipes": recipes,
             "message": (
-                "Recipes found successfully!"
+                "Strictly matched recipes found!"
                 if recipes
-                else "No recipes could be generated. Please try again."
+                else "No suitable recipes found using your ingredients. "
+                     "Try adding more ingredients."
             )
         })
 
@@ -1007,7 +1105,10 @@ def get_recipes():
         return jsonify({
             "success": True,
             "recipes": recommend_local_recipes(clean_list),
-            "message": "Showing saved recipes. AI generation is temporarily unavailable."
+            "message": (
+                "Showing strictly matched saved recipes. "
+                "AI generation is temporarily unavailable."
+            )
         })
 
     except Exception:
