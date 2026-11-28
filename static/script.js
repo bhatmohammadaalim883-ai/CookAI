@@ -546,7 +546,7 @@ function createFullRecipeView(recipe) {
     // Ingredient quantities
     fullRecipe.appendChild(renderRecipeQuantities(recipe));
 
-    // Available ingredients
+    // Ingredients entered by the user
     const availableSection = createElement(
         "section",
         "available-ingredients"
@@ -558,12 +558,31 @@ function createFullRecipeView(recipe) {
 
     availableSection.appendChild(
         createIngredientList(
-            recipe.matched_ingredients,
+            recipe.user_matched_ingredients,
             "No matching ingredients."
         )
     );
 
     fullRecipe.appendChild(availableSection);
+
+    // Pantry staples assumed by CookAI
+    const pantrySection = createElement(
+        "section",
+        "pantry-ingredients"
+    );
+
+    pantrySection.appendChild(
+        createElement("h4", "", "Pantry Staples Assumed")
+    );
+
+    pantrySection.appendChild(
+        createIngredientList(
+            recipe.pantry_ingredients,
+            "No additional pantry staples required."
+        )
+    );
+
+    fullRecipe.appendChild(pantrySection);
 
     // Missing ingredients
     const missingSection = createElement(
@@ -578,7 +597,7 @@ function createFullRecipeView(recipe) {
     missingSection.appendChild(
         createIngredientList(
             recipe.missing_ingredients,
-            "You have all the listed ingredients!"
+            "None — you have all the required ingredients!"
         )
     );
 
@@ -649,15 +668,28 @@ function renderRecipes(recipes) {
                 : "Ingredient match information unavailable"
         );
 
-        // Available ingredients
+        // Ingredients entered by the user
         const matched = createElement(
             "p",
             "available-summary",
-            "Available ingredients: " +
+            "Ingredients you entered: " +
                 (
-                    Array.isArray(recipe.matched_ingredients) &&
-                    recipe.matched_ingredients.length
-                        ? recipe.matched_ingredients.join(", ")
+                    Array.isArray(recipe.user_matched_ingredients) &&
+                    recipe.user_matched_ingredients.length
+                        ? recipe.user_matched_ingredients.join(", ")
+                        : "None"
+                )
+        );
+
+        // Pantry staples assumed by CookAI
+        const pantry = createElement(
+            "p",
+            "pantry-summary",
+            "Pantry staples assumed: " +
+                (
+                    Array.isArray(recipe.pantry_ingredients) &&
+                    recipe.pantry_ingredients.length
+                        ? recipe.pantry_ingredients.join(", ")
                         : "None"
                 )
         );
@@ -671,7 +703,7 @@ function renderRecipes(recipes) {
                     Array.isArray(recipe.missing_ingredients) &&
                     recipe.missing_ingredients.length
                         ? recipe.missing_ingredients.join(", ")
-                        : "None — you have all listed ingredients!"
+                        : "None — you have all the required ingredients!"
                 )
         );
 
@@ -710,6 +742,7 @@ function renderRecipes(recipes) {
             difficulty,
             match,
             matched,
+            pantry,
             missing,
             viewButton,
             fullRecipe
